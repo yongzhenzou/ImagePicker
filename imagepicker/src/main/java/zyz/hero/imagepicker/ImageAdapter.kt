@@ -56,7 +56,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
             if (imageBean.type == MediaType.VIDEO) {
                 var minutes = imageBean.duration / 1000 / 60
                 var seconds = imageBean.duration / 1000 % 60
-                duration.text = "${minutes}:${if (seconds > 10) seconds else "0$seconds"}"
+                duration.text = "${minutes}:${if (seconds >= 10) seconds else "0$seconds"}"
             }
             Glide.with(context).load(imageBean.uri).dontAnimate().into(image)
             if (imageBean.select) {
@@ -72,8 +72,8 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                 if (imageBean.select) {
                     imageBean.select = false
                     selectedData.remove(imageBean)
-                    // TODO: 2021/8/31 这里需要优化
-                    notifyDataSetChanged()
+                   notifyItemRangeChanged(0,items.size)
+
                 } else {
                     if (selectedData.size >= pickConfig.maxCount) {
                         return@setOnClickListener Toast.makeText(

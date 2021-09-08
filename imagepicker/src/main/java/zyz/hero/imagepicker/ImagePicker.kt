@@ -1,12 +1,16 @@
 package zyz.hero.imagepicker
 
 import android.app.Activity
+import android.content.Context
+import android.os.Environment
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
+import java.io.File
+import java.lang.Exception
 
 /**
  * @author yongzhen_zou@163.com
@@ -26,7 +30,7 @@ class ImagePicker private constructor() {
      */
     fun pick(
         lifecycleOwner: LifecycleOwner,
-        destination: Class<out AppCompatActivity>?,
+        destination: Class<out AppCompatActivity>? = ImagePickerActivity::class.java,
         result: (resourceList: ArrayList<String>?) -> Unit
     ) {
         if (maxCount <= 0) {
@@ -141,5 +145,21 @@ class ImagePicker private constructor() {
         fun builder(): Builder {
             return Builder()
         }
+
+        /**
+         * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存
+         */
+        fun clearCache(context: Context) {
+            try {
+                var file = File(getTempDir(context))
+                if (file.exists()){
+                    file.deleteRecursively()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+        fun getTempDir(context: Context) = "${context.getExternalFilesDir(null)}/image_pick/"
     }
 }

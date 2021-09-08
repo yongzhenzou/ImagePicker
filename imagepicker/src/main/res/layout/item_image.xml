@@ -10,7 +10,7 @@
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:alpha="0.9"
+        android:alpha="0.6"
         android:background="#666666"
         android:scaleType="centerCrop"
         app:layout_constraintDimensionRatio="1:1"

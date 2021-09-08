@@ -1,9 +1,9 @@
 package zyz.hero.imagepicker
 
+import android.app.ProgressDialog
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 
 /**
@@ -14,6 +14,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportFragmentManager
         findViewById<Button>(R.id.select).setOnClickListener {
             TempFragment.requestPermission(
                 supportFragmentManager,
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
                     .mediaType(MediaType.IMAGE_AND_VIDEO)
                     .build().pick(this, ImagePickerActivity::class.java) {
                     Log.e("pathList", it.toString())
+
                 }
             }
         }
