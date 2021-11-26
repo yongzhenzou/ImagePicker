@@ -8,7 +8,7 @@ import java.io.Serializable
  */
 data class PickConfig(
     var maxCount: Int = 9,
-    var selectType:MediaType = MediaType.IMAGE_AND_VIDEO,
+    var selectType:MediaType = MediaType.IMAGE,
     var showCamara: Boolean = true,
     var maxImageCount:Int = -1,
     var maxVideoCount:Int = -1,

@@ -24,13 +24,13 @@ class ImagePicker private constructor() {
     private var mediaType: MediaType = MediaType.IMAGE_AND_VIDEO
 
     /**
-     * @param lifecycleOwner 传入fragment或activity
+     * @param lifecycleOwner 传入fragment或activity,注意：在传入的fragment或activity中的onActivityResult中接收资源返回地址
      * @param destination 配置的目标activity，可以传入null进行默认跳转
      * @param result 选择资源后的回调
      */
     fun pick(
         lifecycleOwner: LifecycleOwner,
-        destination: Class<out AppCompatActivity>? = ImagePickerActivity::class.java,
+        destination: Class<out ImagePickerActivity>? = ImagePickerActivity::class.java,
         result: (resourceList: ArrayList<String>?) -> Unit
     ) {
         if (maxCount <= 0) {
@@ -38,9 +38,11 @@ class ImagePicker private constructor() {
                 Log.e(TAG, "maxCount必须大于0")
             }
         }
-        if (mediaType == MediaType.IMAGE_AND_VIDEO && ((maxImageCount > maxCount) or (maxVideoCount > maxCount)) && (maxImageCount > -1 && maxVideoCount > -1)) {
-            return kotlin.run {
-                Log.e(TAG, "混合选择时，maxImageCount和maxVideoCount只能设置一个，且必须小于等于maxCount")
+        if (mediaType == MediaType.IMAGE_AND_VIDEO ) {
+            if ( ((maxImageCount > maxCount) or (maxVideoCount > maxCount)) && (maxImageCount > -1 && maxVideoCount > -1)){
+                return kotlin.run {
+                    Log.e(TAG, "混合选择时，maxImageCount和maxVideoCount只能设置一个，且必须小于等于maxCount")
+                }
             }
         }
         var fragmentManager = when (lifecycleOwner) {

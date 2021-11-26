@@ -13,5 +13,12 @@ class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
         assertEquals(4, 2 + 2)
+        println(Thread.currentThread().name)
+        var threadLocal = ThreadLocal<String>()
+        threadLocal.set("123")
+        var threadLocal2 = ThreadLocal<String>()
+        threadLocal2.set("456")
+        println(threadLocal.get())
+        println(threadLocal2.get())
     }
 }

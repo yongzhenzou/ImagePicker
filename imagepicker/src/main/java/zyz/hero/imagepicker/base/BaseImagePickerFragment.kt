@@ -8,12 +8,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import zyz.hero.imagepicker.*
 import java.io.File
 import java.io.FileOutputStream
+import java.util.concurrent.Executors
 
 /**
  * @author yongzhen_zou@163.com
@@ -36,7 +43,7 @@ abstract class BaseImagePickerFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        require(pickConfig!=null){
+        require(pickConfig != null) {
             "pickConfig can not be null"
         }
         mediaType = pickConfig?.selectType
@@ -58,10 +65,8 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
 
     private fun initData() {
-        Thread {
-            runOnUiThread {
-                showLoading()
-            }
+        lifecycleScope.launch {
+            showLoading()
             mediaList = mutableListOf()
             when (mediaType) {
                 MediaType.IMAGE_AND_VIDEO -> {
@@ -76,15 +81,12 @@ abstract class BaseImagePickerFragment : Fragment() {
                     fillVideoData()
                 }
             }
-            runOnUiThread {
-                hideLoading()
-                showData()
-            }
-        }.start()
-
+            hideLoading()
+            showData()
+        }
     }
 
-    private fun fillImageData() {
+    suspend fun fillImageData() = withContext(Dispatchers.IO) {
         val imageCursor = requireContext().contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -115,7 +117,7 @@ abstract class BaseImagePickerFragment : Fragment() {
         }
     }
 
-    private fun fillVideoData() {
+    private suspend fun fillVideoData() = withContext(Dispatchers.IO) {
         val videoCursor = requireContext().contentResolver.query(
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -148,31 +150,25 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
 
     fun complete(
-        onError: ((e: Exception) -> Unit)? = null,
+        onError: ((e: Throwable) -> Unit)? = null,
         onComplete: (filePaths: ArrayList<String>) -> Unit,
     ) {
-        Thread {
-            try {
+        lifecycleScope.launch {
+            var dir = File(ImagePicker.getTempDir(requireContext()))
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+            showLoading()
+            flow {
                 var result = arrayListOf<String>()
-                var dir = File(ImagePicker.getTempDir(requireContext()))
-                if (!dir.exists()) {
-                    dir.mkdirs()
-                }
-                runOnUiThread {
-                    showLoading()
-                }
-                (recycler.adapter as ImageAdapter).selectedData.forEach { data ->
-                    requireContext().contentResolver.openInputStream(data.uri)?.let { inputStream ->
-                        var rightFile = getRightFile(
-                            data.name,
+                var selectedData = (recycler.adapter as ImageAdapter).selectedData
+                selectedData.forEach { data ->
+                    var inputStream = requireContext().contentResolver.openInputStream(data.uri)
+                    inputStream?.let { inputStream ->
+                        var rightFile = getRightFile(data.name,
                             MimeTypeMap.getSingleton()
-                                .getExtensionFromMimeType(
-                                    requireContext().contentResolver.getType(
-                                        data.uri
-                                    )
-                                )
-                        )
-
+                                .getExtensionFromMimeType(requireContext().contentResolver.getType(
+                                    data.uri)))
                         inputStream.use { inputStream ->
                             var outStream = FileOutputStream(rightFile)
                             outStream?.use { outStream ->
@@ -183,26 +179,19 @@ abstract class BaseImagePickerFragment : Fragment() {
                         }
                     }
                 }
-                runOnUiThread {
-                    onComplete.invoke(result)
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    onError?.invoke(e)
-                }
-            } finally {
-                runOnUiThread {
-                    hideLoading()
-                }
+                emit(result)
             }
-        }.start()
-
-    }
-
-    private fun runOnUiThread(block: () -> Unit) {
-        requireActivity().runOnUiThread {
-            block()
+                .flowOn(Dispatchers.IO)
+                .onEach {
+                    onComplete?.invoke(it)
+                }
+                .catch { e ->
+                    onError?.invoke(e)
+                }.onCompletion {
+                    hideLoading()
+                }.collect()
         }
+
     }
 
     private fun getRightFile(fileName: String, extension: String?): File {
@@ -216,12 +205,17 @@ abstract class BaseImagePickerFragment : Fragment() {
             createNewFile()
         }
     }
+
     fun init(pickConfig: PickConfig): BaseImagePickerFragment {
         return this.apply {
             arguments = Bundle().apply {
                 putSerializable("config", pickConfig)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
     abstract fun hideLoading()

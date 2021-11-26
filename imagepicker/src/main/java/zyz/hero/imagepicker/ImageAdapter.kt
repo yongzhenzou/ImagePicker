@@ -1,6 +1,7 @@
 package zyz.hero.imagepicker
 
 import android.content.Context
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,16 +42,8 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        (holder as? ImageHolder)?.bindView(items[position], position)
-    }
-
-    inner class ImageHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var image = itemView.findViewById<ImageView>(R.id.image)
-        var durationLayout = itemView.findViewById<ConstraintLayout>(R.id.durationLayout)
-        var duration = itemView.findViewById<TextView>(R.id.duration)
-        var select = itemView.findViewById<TextView>(R.id.select)
-
-        fun bindView(imageBean: ImageBean, position: Int) {
+        var imageBean = items[position]
+        (holder as? ImageHolder)?.apply {
             select.visible = pickConfig.maxCount > 1
             durationLayout.visible = imageBean.type == MediaType.VIDEO
             if (imageBean.type == MediaType.VIDEO) {
@@ -58,7 +51,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                 var seconds = imageBean.duration / 1000 % 60
                 duration.text = "${minutes}:${if (seconds >= 10) seconds else "0$seconds"}"
             }
-            Glide.with(context).load(imageBean.uri).dontAnimate().into(image)
+            loadRes(context,imageBean.uri,image)
             if (imageBean.select) {
                 select.text = (selectedData.indexOf(imageBean) + 1).toString()
                 select.setBackgroundResource(R.drawable.shape_select)
@@ -72,7 +65,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                 if (imageBean.select) {
                     imageBean.select = false
                     selectedData.remove(imageBean)
-                   notifyItemRangeChanged(0,items.size)
+                    notifyItemRangeChanged(0, items.size)
 
                 } else {
                     if (selectedData.size >= pickConfig.maxCount) {
@@ -88,7 +81,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                             if (imageBean.type == MediaType.IMAGE) {
                                 if (pickConfig.maxImageCount != -1) {
                                     if (selectedData.filter { it.type == MediaType.IMAGE }.size < pickConfig.maxImageCount) {
-                                        handleSelect(imageBean)
+                                        handleSelect(this, imageBean)
                                     } else {
                                         Toast.makeText(
                                             context,
@@ -97,12 +90,12 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                                         ).show()
                                     }
                                 } else {
-                                    handleSelect(imageBean)
+                                    handleSelect(this, imageBean)
                                 }
                             } else {
                                 if (pickConfig.maxVideoCount != -1) {
                                     if (selectedData.filter { it.type == MediaType.VIDEO }.size < pickConfig.maxVideoCount) {
-                                        handleSelect(imageBean)
+                                        handleSelect(this, imageBean)
                                     } else {
                                         Toast.makeText(
                                             context,
@@ -111,34 +104,45 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                                         ).show()
                                     }
                                 } else {
-                                    handleSelect(imageBean)
+                                    handleSelect(this, imageBean)
                                 }
                             }
                         }
                         else -> {
                             //选取数量只受maxCount约束
-                            handleSelect(imageBean)
+                            handleSelect(this, imageBean)
                         }
 
                     }
                 }
             }
         }
+    }
 
-        private fun handleSelect(imageBean: ImageBean) {
-            if (selectedData.size < pickConfig.maxCount) {
-                imageBean.select = true
-                selectedData.add(imageBean)
-                select.text = (selectedData.indexOf(imageBean) + 1).toString()
-                select.setBackgroundResource(R.drawable.shape_select)
-                image.alpha = 0.6f
-            } else {
-                Toast.makeText(
-                    context,
-                    "最多选取${pickConfig.maxCount}张图片或视频",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
+    private fun loadRes(context: Context,uri:Uri,imageView: ImageView) {
+        Glide.with(context).load(uri).dontAnimate().into(imageView)
+    }
+
+    private fun handleSelect(holder: ImageHolder, imageBean: ImageBean) {
+        if (selectedData.size < pickConfig.maxCount) {
+            imageBean.select = true
+            selectedData.add(imageBean)
+            holder.select.text = (selectedData.indexOf(imageBean) + 1).toString()
+            holder.select.setBackgroundResource(R.drawable.shape_select)
+            holder.image.alpha = 0.6f
+        } else {
+            Toast.makeText(
+                context,
+                "最多选取${pickConfig.maxCount}张图片或视频",
+                Toast.LENGTH_SHORT
+            ).show()
         }
+    }
+
+    class ImageHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        var image = itemView.findViewById<ImageView>(R.id.image)
+        var durationLayout = itemView.findViewById<ConstraintLayout>(R.id.durationLayout)
+        var duration = itemView.findViewById<TextView>(R.id.duration)
+        var select = itemView.findViewById<TextView>(R.id.select)
     }
 }
