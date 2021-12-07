@@ -1,10 +1,13 @@
-package zyz.hero.imagepicker
+package zyz.hero.imagepicker.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import zyz.hero.imagepicker.PickConfig
+import zyz.hero.imagepicker.R
+
 /**
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 12:06 上午
@@ -23,12 +26,9 @@ class ImagePickerActivity: AppCompatActivity() {
             ).commitNow()
         }
         findViewById<Button>(R.id.complete).setOnClickListener {
-            newInstance.complete {
-                setResult(Activity.RESULT_OK, Intent().apply {
-                    putStringArrayListExtra("result", it)
-                })
-                finish()
-            }
+            setResult(Activity.RESULT_OK,Intent().apply {
+                putExtra("result",newInstance.complete())
+            })
         }
     }
 }

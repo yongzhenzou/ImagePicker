@@ -3,6 +3,7 @@ package zyz.hero.imagepicker.base
 import android.content.ContentUris
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,12 +16,13 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import zyz.hero.imagepicker.*
+import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.ui.ImageAdapter
+import zyz.hero.imagepicker.utils.MD5Utils
 import java.io.File
 import java.io.FileOutputStream
-import java.util.concurrent.Executors
 
 /**
  * @author yongzhen_zou@163.com
@@ -28,11 +30,11 @@ import java.util.concurrent.Executors
  */
 abstract class BaseImagePickerFragment : Fragment() {
     private lateinit var recycler: RecyclerView
-    private val pickConfig: PickConfig? by lazy {
-        arguments?.getSerializable("config") as? PickConfig
+    private val pickConfig: PickConfig by lazy {
+        arguments?.getSerializable("config") as PickConfig
     }
     var mediaType: MediaType? = null  //1：视频和图片、2：图片、3：视频
-    var mediaList: MutableList<ImageBean>? = null
+    var mediaList = mutableListOf<ImageBean>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         retainInstance = true
@@ -53,13 +55,16 @@ abstract class BaseImagePickerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recycler = view.findViewById(R.id.recycler) as RecyclerView
         recycler.layoutManager = GridLayoutManager(requireContext(), 4)
-        recycler.adapter = ImageAdapter(requireContext(), pickConfig!!)
         (recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+        recycler.adapter = ImageAdapter(requireContext(), pickConfig!!)
         initData()
     }
 
-    private fun showData() {
+    private fun refreshData() {
         if (!mediaList.isNullOrEmpty()) {
+                if (pickConfig.showCamara){
+                    mediaList.add(0, ImageBean(isCamera = true))
+                }
             (recycler.adapter as ImageAdapter).refreshItems(mediaList)
         }
     }
@@ -67,22 +72,22 @@ abstract class BaseImagePickerFragment : Fragment() {
     private fun initData() {
         lifecycleScope.launch {
             showLoading()
-            mediaList = mutableListOf()
+            mediaList.clear()
             when (mediaType) {
-                MediaType.IMAGE_AND_VIDEO -> {
+               is MediaType.ImageAndVideo -> {
                     fillImageData()
                     fillVideoData()
                     mediaList?.sortByDescending { it.date }
                 }
-                MediaType.IMAGE -> {
+                is MediaType.Image -> {
                     fillImageData()
                 }
-                MediaType.VIDEO -> {
+                is MediaType.Video -> {
                     fillVideoData()
                 }
             }
             hideLoading()
-            showData()
+            refreshData()
         }
     }
 
@@ -104,7 +109,7 @@ abstract class BaseImagePickerFragment : Fragment() {
                             it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID))
                         ),
                         it.getString(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.DISPLAY_NAME)),
-                        MediaType.IMAGE,
+                        MediaType.Image,
                         memiType = it.getString(
                             it.getColumnIndexOrThrow(
                                 MediaStore.Images.ImageColumns.MIME_TYPE
@@ -125,6 +130,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             null,
             "${MediaStore.Video.VideoColumns.DATE_ADDED} desc"
         )
+        Log.e("lajlfja",videoCursor.toString())
         videoCursor?.use {
             while (it.moveToNext()) {
                 mediaList?.add(
@@ -134,7 +140,7 @@ abstract class BaseImagePickerFragment : Fragment() {
                             it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns._ID))
                         ),
                         it.getString(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DISPLAY_NAME)),
-                        MediaType.VIDEO,
+                        MediaType.Video,
                         it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DURATION)),
                         memiType = it.getString(
                             it.getColumnIndexOrThrow(
@@ -144,55 +150,13 @@ abstract class BaseImagePickerFragment : Fragment() {
                         date = it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DATE_ADDED))
                     )
                 )
+                Log.e("lajlfja",mediaList.toString())
             }
         }
 
     }
 
-    fun complete(
-        onError: ((e: Throwable) -> Unit)? = null,
-        onComplete: (filePaths: ArrayList<String>) -> Unit,
-    ) {
-        lifecycleScope.launch {
-            var dir = File(ImagePicker.getTempDir(requireContext()))
-            if (!dir.exists()) {
-                dir.mkdirs()
-            }
-            showLoading()
-            flow {
-                var result = arrayListOf<String>()
-                var selectedData = (recycler.adapter as ImageAdapter).selectedData
-                selectedData.forEach { data ->
-                    var inputStream = requireContext().contentResolver.openInputStream(data.uri)
-                    inputStream?.let { inputStream ->
-                        var rightFile = getRightFile(data.name,
-                            MimeTypeMap.getSingleton()
-                                .getExtensionFromMimeType(requireContext().contentResolver.getType(
-                                    data.uri)))
-                        inputStream.use { inputStream ->
-                            var outStream = FileOutputStream(rightFile)
-                            outStream?.use { outStream ->
-                                inputStream.copyTo(outStream)
-                                result.add(rightFile.absolutePath)
-                            }
-
-                        }
-                    }
-                }
-                emit(result)
-            }
-                .flowOn(Dispatchers.IO)
-                .onEach {
-                    onComplete?.invoke(it)
-                }
-                .catch { e ->
-                    onError?.invoke(e)
-                }.onCompletion {
-                    hideLoading()
-                }.collect()
-        }
-
-    }
+    fun complete() = (recycler.adapter as ImageAdapter).selectedData
 
     private fun getRightFile(fileName: String, extension: String?): File {
         var file =
@@ -213,11 +177,6 @@ abstract class BaseImagePickerFragment : Fragment() {
             }
         }
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     abstract fun hideLoading()
 
     abstract fun showLoading()

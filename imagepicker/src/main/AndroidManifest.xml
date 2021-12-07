@@ -10,7 +10,7 @@
     <application
         >
         <activity
-            android:name=".ImagePickerActivity"
+            android:name=".ui.ImagePickerActivity"
             android:screenOrientation="portrait"></activity>
     </application>
 

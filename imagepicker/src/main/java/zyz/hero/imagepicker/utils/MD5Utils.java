@@ -1,4 +1,4 @@
-package zyz.hero.imagepicker;
+package zyz.hero.imagepicker.utils;
 
 import java.io.FileInputStream;
 import java.security.DigestInputStream;

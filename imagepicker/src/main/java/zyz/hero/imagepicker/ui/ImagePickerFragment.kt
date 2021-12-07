@@ -1,4 +1,4 @@
-package zyz.hero.imagepicker
+package zyz.hero.imagepicker.ui
 
 import android.os.Bundle
 import android.widget.Toast

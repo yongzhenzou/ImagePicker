@@ -1,7 +1,11 @@
-package zyz.hero.imagepicker
+package zyz.hero.imagepicker.ext
 
 import android.view.View
 
+/**
+ * @author yongzhen_zou@163.com
+ * @date 2021/12/7 11:42 上午
+ */
 
 var View.visible: Boolean
     set(visible) {

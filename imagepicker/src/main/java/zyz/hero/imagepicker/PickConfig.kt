@@ -1,5 +1,6 @@
 package zyz.hero.imagepicker
 
+import zyz.hero.imagepicker.sealeds.MediaType
 import java.io.Serializable
 
 /**
@@ -8,7 +9,7 @@ import java.io.Serializable
  */
 data class PickConfig(
     var maxCount: Int = 9,
-    var selectType:MediaType = MediaType.IMAGE,
+    var selectType: MediaType = MediaType.Image,
     var showCamara: Boolean = true,
     var maxImageCount:Int = -1,
     var maxVideoCount:Int = -1,

@@ -11,6 +11,8 @@
         <entry key="imagepicker/src/main/res/layout/activity_imagepicker.xml" value="0.12364130434782608" />
         <entry key="imagepicker/src/main/res/layout/fragment_imagepicker.xml" value="0.1" />
         <entry key="imagepicker/src/main/res/layout/item_image.xml" value="0.335" />
+        <entry key="imagepicker/src/main/res/layout/item_image_picker_camera.xml" value="0.33" />
+        <entry key="imagepicker/src/main/res/layout/item_image_picker_image.xml" value="0.24167507568113017" />
       </map>
     </option>
   </component>

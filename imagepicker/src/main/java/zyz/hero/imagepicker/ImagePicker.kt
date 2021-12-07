@@ -1,167 +1,115 @@
 package zyz.hero.imagepicker
 
-import android.app.Activity
 import android.content.Context
-import android.os.Environment
-import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.LifecycleOwner
+import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.runBlocking
+import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.sealeds.ResultType
 import java.io.File
-import java.lang.Exception
 
 /**
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 12:06 上午
  */
 class ImagePicker private constructor() {
+    /**
+     * 选取图片的最大数量
+     */
     private var maxCount: Int = 9
-    private var showCamara = true
-    private var maxImageCount: Int = -1
-    private var maxVideoCount: Int = -1
-    private var mediaType: MediaType = MediaType.IMAGE_AND_VIDEO
 
     /**
-     * @param lifecycleOwner 传入fragment或activity,注意：在传入的fragment或activity中的onActivityResult中接收资源返回地址
-     * @param destination 配置的目标activity，可以传入null进行默认跳转
-     * @param result 选择资源后的回调
+     *是否显示拍照
      */
-    fun pick(
-        lifecycleOwner: LifecycleOwner,
-        destination: Class<out ImagePickerActivity>? = ImagePickerActivity::class.java,
-        result: (resourceList: ArrayList<String>?) -> Unit
-    ) {
-        if (maxCount <= 0) {
-            return kotlin.run {
-                Log.e(TAG, "maxCount必须大于0")
-            }
-        }
-        if (mediaType == MediaType.IMAGE_AND_VIDEO ) {
-            if ( ((maxImageCount > maxCount) or (maxVideoCount > maxCount)) && (maxImageCount > -1 && maxVideoCount > -1)){
-                return kotlin.run {
-                    Log.e(TAG, "混合选择时，maxImageCount和maxVideoCount只能设置一个，且必须小于等于maxCount")
-                }
-            }
-        }
-        var fragmentManager = when (lifecycleOwner) {
-            is Fragment -> lifecycleOwner.childFragmentManager
-            is FragmentActivity -> lifecycleOwner.supportFragmentManager
-            else -> null
-        }
-        TempFragment.requestPermission(
-            fragmentManager,
-            *(if (showCamara) (Permission.PERMISSION_CAMERA) else Permission.PERMISSION_READ_WRITE)
-        ) {
-            if (it) {
-                TempFragment.startActivityForResult(
-                    fragmentManager,
-                    destination,
-                    bundleOf(
-                        "config" to PickConfig(
-                            maxCount,
-                            mediaType,
-                            showCamara,
-                            maxImageCount,
-                            maxVideoCount,
-                        )
-                    )
-                ) { code, data ->
-                    if (code == Activity.RESULT_OK) {
-                        result(data?.getStringArrayListExtra("result"))
-                    }
-                }
-            }
-        }
+    private var showCamara = true
 
+    /**
+     *同时选择视频和图片时视频最大可选取数量和maxVideoCount互斥
+     */
+    private var maxImageCount: Int = -1
+
+    /**
+     *同时选择视频和图片时视频最大可选取数量和maxImageCount互斥
+     */
+    private var maxVideoCount: Int = -1
+
+    /**
+     *文件选择类型
+     * @see MediaType
+     */
+    private var mediaType: MediaType = MediaType.ImageAndVideo
+
+    var result: ((resourceList: ArrayList<Uri>) -> Unit)? = null
+    fun onResult(result: (resourceList: ArrayList<Uri>) -> Unit) {
+        this.result = result
     }
 
-    class Builder() {
-        private var maxCount: Int = 9
-        private var showCamara = true
-        private var maxVideoCount: Int = -1
-        private var maxImageCount: Int = -1
-        private var mediaType: MediaType = MediaType.IMAGE_AND_VIDEO
+    fun maxCount(count: Int) {
+        this.maxCount = count
+    }
 
-        /**
-         * 选取图片的最大数量
-         */
-        fun maxCount(count: Int): Builder {
-            return this.also {
-                it.maxCount = count
-            }
-        }
+    fun showCamara(showCamara: Boolean) {
+        this.showCamara = showCamara
+    }
 
-        /**
-         *是否显示拍照
-         */
-        fun showCamara(showCamara: Boolean): Builder {
-            return this.also {
-                it.showCamara = showCamara
-            }
-        }
+    fun mediaType(mediaType: MediaType) {
+        this.mediaType = mediaType
+    }
 
-        /**
-         *文件选择类型
-         * @param mediaType MediaType.IMAGE,MediaType.Video,MediaType.IMAGE_AND_VIDEO
-         * @see MediaType
-         */
-        fun mediaType(mediaType: MediaType): Builder {
-            return this.also {
-                it.mediaType = mediaType
-            }
-        }
+    fun maxImageCount(maxImageCount: Int) {
+        this.maxImageCount = maxImageCount
+    }
 
-        /**
-         *同时选择视频和图片时视频最大可选取数量和maxVideoCount互斥
-         */
-        fun maxImageCount(maxImageCount: Int): Builder {
-            return this.also {
-                it.maxImageCount = maxImageCount
-            }
-        }
+    fun maxVideoCount(maxVideoCount: Int) {
+        this.maxVideoCount = maxVideoCount
+    }
+    fun getMaxCount(): Int {
+        return maxCount
+    }
 
-        /**
-         *同时选择视频和图片时视频最大可选取数量和maxImageCount互斥
-         */
-        fun maxVideoCount(maxVideoCount: Int): Builder {
-            return this.also {
-                it.maxVideoCount = maxVideoCount
-            }
-        }
+    fun isShowCamara(): Boolean {
+        return showCamara
+    }
 
-        fun build(): ImagePicker {
-            return ImagePicker().also {
-                it.maxCount = maxCount
-                it.showCamara = showCamara
-                it.maxVideoCount = maxVideoCount
-                it.maxImageCount = maxImageCount
-                it.mediaType = mediaType
-            }
-        }
+    fun getMediaType(): MediaType {
+        return mediaType
+    }
+
+    fun getMaxImageCount(): Int {
+        return maxImageCount
+    }
+
+    fun getMaxVideoCount(): Int {
+        return maxVideoCount
     }
 
     companion object {
-        private const val TAG = "ImagePicker"
-        fun builder(): Builder {
-            return Builder()
-        }
+        const val TAG = "ImagePicker"
 
         /**
          * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存
          */
-        fun clearCache(context: Context) {
-            try {
-                var file = File(getTempDir(context))
-                if (file.exists()){
-                    file.deleteRecursively()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
+        fun clearCache(context: Context) = runBlocking {
+            flow {
+                emit(deleteCache(context))
             }
-
+                .flowOn(Dispatchers.IO)
+                .catch { it.printStackTrace() }
+                .collect()
         }
+
+        private fun deleteCache(context: Context) {
+            var file = File(getTempDir(context))
+            if (file.exists()) {
+                file.deleteRecursively()
+            }
+        }
+
         fun getTempDir(context: Context) = "${context.getExternalFilesDir(null)}/image_pick/"
+        fun newInstance() = ImagePicker()
     }
 }
