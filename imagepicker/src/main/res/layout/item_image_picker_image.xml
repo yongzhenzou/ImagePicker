@@ -20,7 +20,7 @@
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/gradient_shadow"
+        android:background="@drawable/image_picker_gradient_shadow"
         android:paddingVertical="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.38"
@@ -51,7 +51,7 @@
         android:layout_height="22dp"
         android:layout_marginTop="5dp"
         android:layout_marginRight="5dp"
-        android:background="@drawable/shape_unselect"
+        android:background="@drawable/image_picker_shape_unselect"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

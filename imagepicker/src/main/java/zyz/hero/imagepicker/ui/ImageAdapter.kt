@@ -21,7 +21,7 @@ import zyz.hero.imagepicker.sealeds.MediaType
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 1:34 上午
  */
-class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
+class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhoto:()->Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var items = arrayListOf<ImageBean>()
     var selectedData = arrayListOf<ImageBean>()
@@ -53,7 +53,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
         if (getItemViewType(position)==0){
            ( holder as CameraHolder)?.also {
                holder.itemView.setOnClickListener {
-                   Toast.makeText(context,"拍照",Toast.LENGTH_SHORT).show()
+                   takePhoto?.invoke()
                }
            }
         }else{
@@ -69,12 +69,12 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
                 loadRes(context,imageBean.uri!!,image)
                 if (imageBean.select) {
                     select.text = (selectedData.indexOf(imageBean) + 1).toString()
-                    select.setBackgroundResource(R.drawable.shape_select)
+                    select.setBackgroundResource(R.drawable.image_picker_shape_select)
                     image.alpha = 0.6f
                 } else {
                     image.alpha = 0.9f
                     select.text = null
-                    select.setBackgroundResource(R.drawable.shape_unselect)
+                    select.setBackgroundResource(R.drawable.image_picker_shape_unselect)
                 }
                 select.setOnClickListener {
                     if (imageBean.select) {
@@ -143,7 +143,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig) :
             imageBean.select = true
             selectedData.add(imageBean)
             holder.select.text = (selectedData.indexOf(imageBean) + 1).toString()
-            holder.select.setBackgroundResource(R.drawable.shape_select)
+            holder.select.setBackgroundResource(R.drawable.image_picker_shape_select)
             holder.image.alpha = 0.6f
         } else {
             Toast.makeText(

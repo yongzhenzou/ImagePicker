@@ -4,23 +4,14 @@ import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.webkit.MimeTypeMap
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.ImagePicker
 import zyz.hero.imagepicker.Permission
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.PickConfig
-import zyz.hero.imagepicker.ui.TempFragment
+import zyz.hero.imagepicker.utils.TempFragment
 import zyz.hero.imagepicker.sealeds.MediaType
-import zyz.hero.imagepicker.sealeds.ResultType
-import zyz.hero.imagepicker.ui.ImageAdapter
-import java.io.File
-import kotlin.collections.forEach
 
 inline fun pickResource(
     activity: AppCompatActivity,

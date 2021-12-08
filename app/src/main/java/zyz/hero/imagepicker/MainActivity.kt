@@ -6,8 +6,7 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import zyz.hero.imagepicker.ext.pickResource
 import zyz.hero.imagepicker.sealeds.MediaType
-import zyz.hero.imagepicker.sealeds.ResultType
-import zyz.hero.imagepicker.ui.TempFragment
+import zyz.hero.imagepicker.utils.TempFragment
 
 /**
  * @author yongzhen_zou@163.com

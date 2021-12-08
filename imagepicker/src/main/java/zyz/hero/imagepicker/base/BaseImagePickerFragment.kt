@@ -7,22 +7,21 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.MimeTypeMap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import zyz.hero.imagepicker.*
+import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.PickConfig
+import zyz.hero.imagepicker.R
 import zyz.hero.imagepicker.sealeds.MediaType
 import zyz.hero.imagepicker.ui.ImageAdapter
-import zyz.hero.imagepicker.utils.MD5Utils
-import java.io.File
-import java.io.FileOutputStream
+import zyz.hero.imagepicker.utils.TempFragment
 
 /**
  * @author yongzhen_zou@163.com
@@ -56,15 +55,31 @@ abstract class BaseImagePickerFragment : Fragment() {
         recycler = view.findViewById(R.id.recycler) as RecyclerView
         recycler.layoutManager = GridLayoutManager(requireContext(), 4)
         (recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
-        recycler.adapter = ImageAdapter(requireContext(), pickConfig!!)
+        recycler.adapter = ImageAdapter(requireContext(), pickConfig!!) {
+            takePhoto()
+        }
         initData()
+    }
+
+    private fun takePhoto() {
+        TempFragment.takePhoto(childFragmentManager) { data ->
+            if (pickConfig.showCamara) {
+                data?.let {
+                    (recycler.adapter as ImageAdapter).apply {
+                        items.add(1, ImageBean(it.uri, it.name, MediaType.Image))
+                        notifyItemInserted(1)
+                    }
+                }
+
+            }
+        }
     }
 
     private fun refreshData() {
         if (!mediaList.isNullOrEmpty()) {
-                if (pickConfig.showCamara){
-                    mediaList.add(0, ImageBean(isCamera = true))
-                }
+            if (pickConfig.showCamara) {
+                mediaList.add(0, ImageBean(isCamera = true))
+            }
             (recycler.adapter as ImageAdapter).refreshItems(mediaList)
         }
     }
@@ -74,16 +89,28 @@ abstract class BaseImagePickerFragment : Fragment() {
             showLoading()
             mediaList.clear()
             when (mediaType) {
-               is MediaType.ImageAndVideo -> {
-                    fillImageData()
-                    fillVideoData()
+                is MediaType.ImageAndVideo -> {
+                    var a = System.currentTimeMillis()
+                    withContext(Dispatchers.IO) {
+                        mediaList.addAll(withContext(Dispatchers.Default) {
+                            getImageData()
+                        })
+                        mediaList.addAll(withContext(Dispatchers.Default) {
+                            getVideoData()
+                        })
+                    }
                     mediaList?.sortByDescending { it.date }
+                    Log.e("initData ", ((System.currentTimeMillis() - a)).toString())
                 }
                 is MediaType.Image -> {
-                    fillImageData()
+                    mediaList.addAll(async {
+                        getImageData()
+                    }.await())
                 }
                 is MediaType.Video -> {
-                    fillVideoData()
+                    mediaList.addAll(async {
+                        getVideoData()
+                    }.await())
                 }
             }
             hideLoading()
@@ -91,7 +118,8 @@ abstract class BaseImagePickerFragment : Fragment() {
         }
     }
 
-    suspend fun fillImageData() = withContext(Dispatchers.IO) {
+    private fun getImageData(): MutableList<ImageBean> {
+        var dataList = mutableListOf<ImageBean>()
         val imageCursor = requireContext().contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -102,7 +130,7 @@ abstract class BaseImagePickerFragment : Fragment() {
 
         imageCursor?.use {
             while (it.moveToNext()) {
-                mediaList?.add(
+                dataList?.add(
                     ImageBean(
                         ContentUris.withAppendedId(
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -120,9 +148,11 @@ abstract class BaseImagePickerFragment : Fragment() {
                 )
             }
         }
+        return dataList
     }
 
-    private suspend fun fillVideoData() = withContext(Dispatchers.IO) {
+    private fun getVideoData(): MutableList<ImageBean> {
+        var dataList = mutableListOf<ImageBean>()
         val videoCursor = requireContext().contentResolver.query(
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -130,10 +160,9 @@ abstract class BaseImagePickerFragment : Fragment() {
             null,
             "${MediaStore.Video.VideoColumns.DATE_ADDED} desc"
         )
-        Log.e("lajlfja",videoCursor.toString())
         videoCursor?.use {
             while (it.moveToNext()) {
-                mediaList?.add(
+                dataList.add(
                     ImageBean(
                         ContentUris.withAppendedId(
                             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -150,25 +179,12 @@ abstract class BaseImagePickerFragment : Fragment() {
                         date = it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DATE_ADDED))
                     )
                 )
-                Log.e("lajlfja",mediaList.toString())
             }
         }
-
+        return dataList
     }
 
     fun complete() = (recycler.adapter as ImageAdapter).selectedData
-
-    private fun getRightFile(fileName: String, extension: String?): File {
-        var file =
-            File(ImagePicker.getTempDir(requireContext()) + MD5Utils.stringToMD5(fileName) + ".$extension")
-        while (file.exists()) {
-            file =
-                File(ImagePicker.getTempDir(requireContext()) + MD5Utils.stringToMD5(fileName + System.nanoTime()) + ".$extension")
-        }
-        return file.apply {
-            createNewFile()
-        }
-    }
 
     fun init(pickConfig: PickConfig): BaseImagePickerFragment {
         return this.apply {
@@ -177,6 +193,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             }
         }
     }
+
     abstract fun hideLoading()
 
     abstract fun showLoading()
