@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import zyz.hero.imagepicker.ImageBean
@@ -90,7 +89,6 @@ abstract class BaseImagePickerFragment : Fragment() {
             mediaList.clear()
             when (mediaType) {
                 is MediaType.ImageAndVideo -> {
-                    var a = System.currentTimeMillis()
                     withContext(Dispatchers.IO) {
                         mediaList.addAll(withContext(Dispatchers.Default) {
                             getImageData()
@@ -100,17 +98,16 @@ abstract class BaseImagePickerFragment : Fragment() {
                         })
                     }
                     mediaList?.sortByDescending { it.date }
-                    Log.e("initData ", ((System.currentTimeMillis() - a)).toString())
                 }
                 is MediaType.Image -> {
-                    mediaList.addAll(async {
+                    mediaList.addAll(withContext(Dispatchers.Default) {
                         getImageData()
-                    }.await())
+                    })
                 }
                 is MediaType.Video -> {
-                    mediaList.addAll(async {
+                    mediaList.addAll(withContext(Dispatchers.Default) {
                         getVideoData()
-                    }.await())
+                    })
                 }
             }
             hideLoading()
