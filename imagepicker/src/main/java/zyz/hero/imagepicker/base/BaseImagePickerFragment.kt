@@ -12,15 +12,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.PickConfig
 import zyz.hero.imagepicker.R
+import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.sealeds.MediaType
 import zyz.hero.imagepicker.ui.ImageAdapter
+import zyz.hero.imagepicker.utils.ResUtils
 import zyz.hero.imagepicker.utils.TempFragment
+import kotlin.system.measureNanoTime
+import kotlin.system.measureTimeMillis
 
 /**
  * @author yongzhen_zou@163.com
@@ -65,7 +67,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             if (pickConfig.showCamara) {
                 data?.let {
                     (recycler.adapter as ImageAdapter).apply {
-                        items.add(1, ImageBean(it.uri, it.name, MediaType.Image))
+                        items.add(1, ImageBean(it.uri, it.name, TYPE_IMG))
                         notifyItemInserted(1)
                     }
                 }
@@ -87,99 +89,36 @@ abstract class BaseImagePickerFragment : Fragment() {
         lifecycleScope.launch {
             showLoading()
             mediaList.clear()
-            when (mediaType) {
-                is MediaType.ImageAndVideo -> {
-                    withContext(Dispatchers.IO) {
-                        mediaList.addAll(withContext(Dispatchers.Default) {
-                            getImageData()
-                        })
-                        mediaList.addAll(withContext(Dispatchers.Default) {
-                            getVideoData()
-                        })
+                withContext(Dispatchers.IO) {
+                    when (mediaType) {
+                        is MediaType.ImageAndVideo -> {
+                            var images = async{ ResUtils.getImageData(requireContext()) }
+                            var videos = async { ResUtils.getVideoData(requireContext()) }
+                            mediaList.apply {
+                                addAll(images.await())
+                                addAll(videos.await())
+                            }
+                        }
+                        is MediaType.Image -> {
+                            var images = async{ ResUtils.getImageData(requireContext()) }
+                            mediaList.apply {
+                                addAll(images.await())
+                            }
+                        }
+                        is MediaType.Video -> {
+                            var videos = async { ResUtils.getVideoData(requireContext()) }
+                            mediaList.apply {
+                                addAll(videos.await())
+                            }
+                        }
                     }
                     mediaList?.sortByDescending { it.date }
                 }
-                is MediaType.Image -> {
-                    mediaList.addAll(withContext(Dispatchers.Default) {
-                        getImageData()
-                    })
-                }
-                is MediaType.Video -> {
-                    mediaList.addAll(withContext(Dispatchers.Default) {
-                        getVideoData()
-                    })
-                }
-            }
-            hideLoading()
-            refreshData()
+                hideLoading()
+                refreshData()
         }
     }
 
-    private fun getImageData(): MutableList<ImageBean> {
-        var dataList = mutableListOf<ImageBean>()
-        val imageCursor = requireContext().contentResolver.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            null,
-            null,
-            null,
-            "${MediaStore.Images.ImageColumns.DATE_ADDED} desc"
-        )
-
-        imageCursor?.use {
-            while (it.moveToNext()) {
-                dataList?.add(
-                    ImageBean(
-                        ContentUris.withAppendedId(
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID))
-                        ),
-                        it.getString(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.DISPLAY_NAME)),
-                        MediaType.Image,
-                        memiType = it.getString(
-                            it.getColumnIndexOrThrow(
-                                MediaStore.Images.ImageColumns.MIME_TYPE
-                            )
-                        ),
-                        date = it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns.DATE_ADDED))
-                    )
-                )
-            }
-        }
-        return dataList
-    }
-
-    private fun getVideoData(): MutableList<ImageBean> {
-        var dataList = mutableListOf<ImageBean>()
-        val videoCursor = requireContext().contentResolver.query(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-            null,
-            null,
-            null,
-            "${MediaStore.Video.VideoColumns.DATE_ADDED} desc"
-        )
-        videoCursor?.use {
-            while (it.moveToNext()) {
-                dataList.add(
-                    ImageBean(
-                        ContentUris.withAppendedId(
-                            MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
-                            it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns._ID))
-                        ),
-                        it.getString(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DISPLAY_NAME)),
-                        MediaType.Video,
-                        it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DURATION)),
-                        memiType = it.getString(
-                            it.getColumnIndexOrThrow(
-                                MediaStore.Video.VideoColumns.MIME_TYPE
-                            )
-                        ),
-                        date = it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns.DATE_ADDED))
-                    )
-                )
-            }
-        }
-        return dataList
-    }
 
     fun complete() = (recycler.adapter as ImageAdapter).selectedData
 

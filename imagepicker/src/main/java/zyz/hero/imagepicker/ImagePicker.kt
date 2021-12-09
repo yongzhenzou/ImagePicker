@@ -43,10 +43,21 @@ class ImagePicker private constructor() {
      */
     private var mediaType: MediaType = MediaType.ImageAndVideo
 
-    var result: ((resourceList: ArrayList<Uri>) -> Unit)? = null
-    fun onResult(result: (resourceList: ArrayList<Uri>) -> Unit) {
-        this.result = result
+    var uriResult: ((resourceList: ArrayList<Uri>) -> Unit)? = null
+    var fileResult: ((resourceList: ArrayList<File>) -> Unit)? = null
+    var pathResult: ((resourceList: ArrayList<String>) -> Unit)? = null
+    fun asUri(uriResult: (resourceList: ArrayList<Uri>) -> Unit) {
+        this.uriResult = uriResult
     }
+
+    fun asFile(fileResult: (resourceList: ArrayList<File>) -> Unit) {
+        this.fileResult = fileResult
+    }
+
+    fun asPath(pathResult: (resourceList: ArrayList<String>) -> Unit) {
+        this.pathResult = pathResult
+    }
+
 
     fun maxCount(count: Int) {
         this.maxCount = count
@@ -67,6 +78,7 @@ class ImagePicker private constructor() {
     fun maxVideoCount(maxVideoCount: Int) {
         this.maxVideoCount = maxVideoCount
     }
+
     fun getMaxCount(): Int {
         return maxCount
     }
@@ -89,6 +101,7 @@ class ImagePicker private constructor() {
 
     companion object {
         const val TAG = "ImagePicker"
+        fun newInstance() = ImagePicker()
 
         /**
          * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存
@@ -102,14 +115,14 @@ class ImagePicker private constructor() {
                 .collect()
         }
 
-        private fun deleteCache(context: Context) {
+        inline fun deleteCache(context: Context) {
             var file = File(getTempDir(context))
             if (file.exists()) {
                 file.deleteRecursively()
             }
         }
 
-        fun getTempDir(context: Context) = "${context.getExternalFilesDir(null)}/image_pick/"
-        fun newInstance() = ImagePicker()
+        inline fun getTempDir(context: Context) = "${context.cacheDir.absolutePath}/image_pick/"
+
     }
 }

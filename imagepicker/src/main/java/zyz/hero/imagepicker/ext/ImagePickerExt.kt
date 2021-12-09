@@ -1,10 +1,18 @@
 package zyz.hero.imagepicker.ext
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.webkit.MimeTypeMap
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.ImagePicker
 import zyz.hero.imagepicker.Permission
@@ -12,15 +20,20 @@ import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.PickConfig
 import zyz.hero.imagepicker.utils.TempFragment
 import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.utils.FileUtils
+import java.io.File
+import java.io.FileOutputStream
+import kotlin.system.measureTimeMillis
 
-inline fun pickResource(
+fun pickResource(
     activity: AppCompatActivity,
     config: ImagePicker.() -> Unit = {},
 ): ImagePicker {
     return ImagePicker.newInstance().apply(config).apply {
         if (checkParams()) {
-            TempFragment.requestPermission(activity.supportFragmentManager,permissions = Permission.PERMISSION_CAMERA){
-                if (it){
+            TempFragment.requestPermission(activity.supportFragmentManager,
+                permissions = Permission.PERMISSION_CAMERA) {
+                if (it) {
                     TempFragment.startActivityForResult(
                         activity.supportFragmentManager,
                         ImagePickerActivity::class.java,
@@ -36,10 +49,21 @@ inline fun pickResource(
 
                     ) { code, data ->
                         if (code == Activity.RESULT_OK) {
-                            (data?.getSerializableExtra("result") as? ArrayList<ImageBean>)?.let {dataList->
-                                result?.invoke(arrayListOf<Uri>().apply{
-                                    dataList.mapTo(this){it.uri!!}
+                            (data?.getSerializableExtra("result") as? ArrayList<ImageBean>)?.let { dataList ->
+                                uriResult?.invoke(arrayListOf<Uri>().apply {
+                                    dataList.mapTo(this) { it.uri!! }
                                 })
+                                fileResult?.let {
+                                    activity.lifecycleScope.launch {
+                                        it.invoke(FileUtils.uriToFile(activity, dataList))
+                                    }
+                                }
+                                pathResult?.let {
+                                    activity.lifecycleScope.launch {
+                                        it.invoke(FileUtils.uriToFile(activity,
+                                            dataList).mapTo(arrayListOf()) { it.absolutePath })
+                                    }
+                                }
                             }
                         }
                     }
@@ -50,50 +74,7 @@ inline fun pickResource(
     }
 }
 
-//{
-//lifecycleScope.launch {
-//
-//    var dir = File(ImagePicker.getTempDir(requireContext()))
-//    if (!dir.exists()) {
-//        dir.mkdirs()
-//    }
-//    showLoading()
-//    flow {
-//        var result = arrayListOf<String>()
-//        var selectedData = (recycler.adapter as ImageAdapter).selectedData
-//        selectedData.forEach { data ->
-//            var inputStream = requireContext().contentResolver.openInputStream(data.uri)
-//            inputStream?.let { inputStream ->
-//                var rightFile = getRightFile(data.name,
-//                    MimeTypeMap.getSingleton()
-//                        .getExtensionFromMimeType(requireContext().contentResolver.getType(
-//                            data.uri)))
-//                inputStream.use { inputStream ->
-//                    var outStream = java.io.FileOutputStream(rightFile)
-//                    outStream?.use { outStream ->
-//                        inputStream.copyTo(outStream)
-//                        result.add(rightFile.absolutePath)
-//                    }
-//
-//                }
-//            }
-//        }
-//        emit(result)
-//    }
-//        .flowOn(Dispatchers.IO)
-//        .onEach {
-//            onComplete?.invoke(it)
-//        }
-//        .catch { e ->
-//            onError?.invoke(e)
-//        }.onCompletion {
-//            hideLoading()
-//        }.collect()
-//}
-//
-//}
-
-inline fun ImagePicker.checkParams(): Boolean {
+fun ImagePicker.checkParams(): Boolean {
     if (getMaxCount() <= 0) {
         return kotlin.run {
             Log.e(ImagePicker.TAG, "maxCount must be bigger than 0")

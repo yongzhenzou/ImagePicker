@@ -4,8 +4,17 @@ import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.ImagePicker
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,6 +30,31 @@ class FileUtils {
                 FileProvider.getUriForFile(context, "zyz.hero.imagepicker.fileprovider", file)
             else
                 Uri.fromFile(file)
+        }
+       suspend  fun uriToFile(
+            activity: AppCompatActivity,
+            dataList: ArrayList<ImageBean>,
+        ) = withContext(Dispatchers.IO) {
+            dataList.map {
+                async {
+                    Log.e("ImagePicker", "start")
+                    activity.contentResolver.openInputStream(it.uri!!).use { inputStream ->
+                        var dir = File(ImagePicker.getTempDir(activity))
+                        dir.mkdirs()
+                        var file = File(ImagePicker.getTempDir(activity) + it.name)
+                        if (file.exists()) {
+                            file.delete()
+                        }
+                        FileOutputStream(file).use { outStream ->
+                            inputStream?.copyTo(outStream)
+                        }
+                        Log.e("ImagePicker", "end")
+                        file
+                    }
+                }
+            }.mapTo(arrayListOf()) {
+                it.await()
+            }
         }
     }
 }

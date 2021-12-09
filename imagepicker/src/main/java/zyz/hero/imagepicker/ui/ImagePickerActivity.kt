@@ -29,6 +29,7 @@ class ImagePickerActivity: AppCompatActivity() {
             setResult(Activity.RESULT_OK,Intent().apply {
                 putExtra("result",newInstance.complete())
             })
+            finish()
         }
     }
 }

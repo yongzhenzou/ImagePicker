@@ -24,9 +24,11 @@ class MainActivity : AppCompatActivity() {
                 pickResource(this){
                     maxCount(8)
                     maxImageCount(6)
-                    mediaType(MediaType.ImageAndVideo)
-                }.onResult {
-                    Log.e("pathList", it.toString())
+                    mediaType(MediaType.Video)
+                }.asFile {
+                    it.forEach {
+                        Log.e("fileSize",(it.length()/1024).toString())
+                    }
                 }
             }
         }

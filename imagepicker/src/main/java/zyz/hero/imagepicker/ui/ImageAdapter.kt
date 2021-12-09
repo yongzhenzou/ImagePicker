@@ -11,9 +11,7 @@ import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import zyz.hero.imagepicker.ImageBean
-import zyz.hero.imagepicker.PickConfig
-import zyz.hero.imagepicker.R
+import zyz.hero.imagepicker.*
 import zyz.hero.imagepicker.ext.visible
 import zyz.hero.imagepicker.sealeds.MediaType
 
@@ -60,8 +58,8 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
             (holder as? ImageHolder)?.apply {
                 var imageBean = items[position]
                 select.visible = pickConfig.maxCount > 1
-                durationLayout.visible = imageBean.type == MediaType.Video
-                if (imageBean.type == MediaType.Video) {
+                durationLayout.visible = imageBean.type == TYPE_VIDEO
+                if (imageBean.type == TYPE_VIDEO) {
                     var minutes = imageBean.duration / 1000 / 60
                     var seconds = imageBean.duration / 1000 % 60
                     duration.text = "${minutes}:${if (seconds >= 10) seconds else "0$seconds"}"
@@ -92,9 +90,9 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
                         when (pickConfig.selectType) {
                             MediaType.ImageAndVideo -> {
                                 //混合选择是否设置了maxImageCount或者maxVideoCount，只能设置一个
-                                if (imageBean.type == MediaType.Image) {
+                                if (imageBean.type == TYPE_IMG) {
                                     if (pickConfig.maxImageCount != -1) {
-                                        if (selectedData.filter { it.type == MediaType.Image }.size < pickConfig.maxImageCount) {
+                                        if (selectedData.filter { it.type == TYPE_IMG }.size < pickConfig.maxImageCount) {
                                             handleSelect(this, imageBean)
                                         } else {
                                             Toast.makeText(
@@ -108,7 +106,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
                                     }
                                 } else {
                                     if (pickConfig.maxVideoCount != -1) {
-                                        if (selectedData.filter { it.type == MediaType.Video }.size < pickConfig.maxVideoCount) {
+                                        if (selectedData.filter { it.type == TYPE_VIDEO }.size < pickConfig.maxVideoCount) {
                                             handleSelect(this, imageBean)
                                         } else {
                                             Toast.makeText(

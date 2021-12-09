@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.sealeds.MediaType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import java.io.File
@@ -134,7 +135,7 @@ class TempFragment : Fragment() {
         }
         values.put(MediaStore.Images.Media.MIME_TYPE,"image/JPEG")
         var uri = requireActivity().contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)!!
-        imageBean = ImageBean(uri,fileName,MediaType.Image)
+        imageBean = ImageBean(uri,fileName, TYPE_IMG)
         startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             putExtra(MediaStore.EXTRA_OUTPUT, uri)
         }, REQUEST_CODE)
