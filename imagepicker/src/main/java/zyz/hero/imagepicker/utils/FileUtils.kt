@@ -7,6 +7,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,7 @@ class FileUtils {
                 Uri.fromFile(file)
         }
        suspend  fun uriToFile(
-            activity: AppCompatActivity,
+            activity: FragmentActivity,
             dataList: ArrayList<ImageBean>,
         ) = withContext(Dispatchers.IO) {
             dataList.map {
