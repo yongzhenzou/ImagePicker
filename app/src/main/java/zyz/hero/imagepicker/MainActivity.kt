@@ -26,15 +26,7 @@ class MainActivity : AppCompatActivity() {
                     maxCount(8)
                     maxImageCount(6)
                     mediaType(MediaType.Video)
-                }.showLoading {
-                    Log.e("ImagePicker", "loading")
-                }.hideLoading {
-                    Log.e("ImagePicker", "hide")
-                }.asFile {
-                        it.forEach {
-                            Log.e("fileSize", (it.length() / 1024).toString())
-                        }
-                    }.start(this)
+                }.start(this)
             }
         }
     }

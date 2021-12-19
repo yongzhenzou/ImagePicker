@@ -54,16 +54,8 @@ class ImagePicker private constructor() {
      * @see MediaType
      */
     private var mediaType: MediaType = MediaType.ImageAndVideo
-    private var showLoading:(()->Unit)? = null
-    private var hideLoading:(()->Unit)? = null
-
-    fun showLoading(showLoading:()->Unit) = apply {
-        this.showLoading = showLoading
-    }
-    fun hideLoading(hideLoading:()->Unit) = apply {
-        this.hideLoading = hideLoading
-    }
-
+    private var showLoading: (() -> Unit)? = null
+    private var hideLoading: (() -> Unit)? = null
     private var uriResult: ((resourceList: ArrayList<Uri>) -> Unit)? = null
     private var fileResult: ((resourceList: ArrayList<File>) -> Unit)? = null
     private var pathResult: ((resourceList: ArrayList<String>) -> Unit)? = null
@@ -72,16 +64,28 @@ class ImagePicker private constructor() {
         this.uriResult = uriResult
     }
 
-    fun asFile(fileResult: (resourceList: ArrayList<File>) -> Unit) = apply {
+    fun asFile(
+        showLoading: () -> Unit = {},
+        hideLoading: () -> Unit = {},
+        fileResult: (resourceList: ArrayList<File>) -> Unit,
+    ) = apply {
+        this.showLoading = showLoading
+        this.hideLoading = hideLoading
         this.fileResult = fileResult
     }
 
-    fun asPath(pathResult: (resourceList: ArrayList<String>) -> Unit) = apply {
+    fun asPath(
+        showLoading: () -> Unit = {},
+        hideLoading: () -> Unit = {},
+        pathResult: (resourceList: ArrayList<String>) -> Unit,
+    ) = apply {
+        this.showLoading = showLoading
+        this.hideLoading = hideLoading
         this.pathResult = pathResult
     }
 
-    fun start(activity: FragmentActivity) {
-        realStart(activity)
+    fun start(fragmentActivity: FragmentActivity) {
+        realStart(fragmentActivity)
     }
 
     fun start(fragment: Fragment) {
@@ -162,7 +166,8 @@ class ImagePicker private constructor() {
         }
         return true
     }
-    class Builder{
+
+    class Builder {
         /**
          * 选取图片的最大数量
          */
@@ -200,15 +205,16 @@ class ImagePicker private constructor() {
             this.mediaType = mediaType
         }
 
-        fun maxImageCount(maxImageCount: Int) =apply {
+        fun maxImageCount(maxImageCount: Int) = apply {
             this.maxImageCount = maxImageCount
         }
 
         fun maxVideoCount(maxVideoCount: Int) = apply {
             this.maxVideoCount = maxVideoCount
         }
+
         fun build() = ImagePicker().also {
-           it.maxCount = maxCount
+            it.maxCount = maxCount
             it.maxImageCount = maxImageCount
             it.maxVideoCount = maxVideoCount
             it.showCamara = showCamara
@@ -217,8 +223,10 @@ class ImagePicker private constructor() {
 
 
     }
+
     companion object {
         const val TAG = "ImagePicker"
+
         /**
          * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存
          */

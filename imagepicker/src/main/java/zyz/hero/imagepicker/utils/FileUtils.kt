@@ -24,21 +24,21 @@ import java.util.*
  * @date 2021/12/7 5:52 下午
  */
 class FileUtils {
-    companion object{
-        fun getFileUri(context:Context,filePath:String):Uri{
+    companion object {
+        fun getFileUri(context: Context, filePath: String): Uri {
             var file = File(filePath)
-            return  if (Build.VERSION.SDK_INT >= 24)
+            return if (Build.VERSION.SDK_INT >= 24)
                 FileProvider.getUriForFile(context, "zyz.hero.imagepicker.fileprovider", file)
             else
                 Uri.fromFile(file)
         }
-       suspend  fun uriToFile(
+
+        suspend fun uriToFile(
             activity: FragmentActivity,
             dataList: ArrayList<ImageBean>,
         ) = withContext(Dispatchers.IO) {
             dataList.map {
                 async {
-                    Log.e("ImagePicker", "start")
                     activity.contentResolver.openInputStream(it.uri!!).use { inputStream ->
                         var dir = File(ImagePicker.getTempDir(activity))
                         dir.mkdirs()
@@ -49,7 +49,6 @@ class FileUtils {
                         FileOutputStream(file).use { outStream ->
                             inputStream?.copyTo(outStream)
                         }
-                        Log.e("ImagePicker", "end")
                         file
                     }
                 }
