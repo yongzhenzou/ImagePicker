@@ -1,9 +1,6 @@
 package zyz.hero.imagepicker.base
 
-import android.content.ContentUris
 import android.os.Bundle
-import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,9 +17,7 @@ import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.sealeds.MediaType
 import zyz.hero.imagepicker.ui.ImageAdapter
 import zyz.hero.imagepicker.utils.ResUtils
-import zyz.hero.imagepicker.utils.TempFragment
-import kotlin.system.measureNanoTime
-import kotlin.system.measureTimeMillis
+import zyz.hero.imagepicker.utils.SupportFragment
 
 /**
  * @author yongzhen_zou@163.com
@@ -63,7 +58,7 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
 
     private fun takePhoto() {
-        TempFragment.takePhoto(childFragmentManager) { data ->
+        SupportFragment.takePhoto(childFragmentManager) { data ->
             if (pickConfig.showCamara) {
                 data?.let {
                     (recycler.adapter as ImageAdapter).apply {

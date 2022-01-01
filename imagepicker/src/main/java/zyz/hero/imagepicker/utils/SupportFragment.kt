@@ -13,12 +13,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.TYPE_IMG
-import zyz.hero.imagepicker.sealeds.MediaType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import java.io.File
 
 
-class TempFragment : Fragment() {
+class SupportFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.retainInstance = true
@@ -73,7 +72,7 @@ class TempFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = TempFragment()
+            var tempFragment = SupportFragment()
             fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
             tempFragment.onResult = onResult
             tempFragment.mFragmentManager = fragmentManager
@@ -93,7 +92,7 @@ class TempFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = TempFragment()
+            var tempFragment = SupportFragment()
             fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
             tempFragment.onPermissionResult = onPermissionResult
             tempFragment.mFragmentManager = fragmentManager
@@ -107,7 +106,7 @@ class TempFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = TempFragment()
+            var tempFragment = SupportFragment()
             fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
             tempFragment.captureResult = captureResult
             tempFragment.mFragmentManager = fragmentManager

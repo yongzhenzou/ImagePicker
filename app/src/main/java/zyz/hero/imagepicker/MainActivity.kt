@@ -1,13 +1,11 @@
 package zyz.hero.imagepicker
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import zyz.hero.imagepicker.ext.pickResource
 import zyz.hero.imagepicker.sealeds.MediaType
-import zyz.hero.imagepicker.utils.TempFragment
+import zyz.hero.imagepicker.utils.SupportFragment
 
 /**
  * @author yongzhen_zou@163.com
@@ -18,16 +16,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         findViewById<Button>(R.id.select).setOnClickListener { view ->
-            TempFragment.requestPermission(
-                supportFragmentManager,
-                *Permission.PERMISSION_CAMERA
-            ) {
-                pickResource {
-                    maxCount(8)
-                    maxImageCount(6)
-                    mediaType(MediaType.Video)
-                }.start(this)
-            }
+            pickResource {
+                maxCount(8)
+                maxImageCount(6)
+                mediaType(MediaType.ImageAndVideo)
+
+            }.asFile {
+
+            }.start(this)
         }
     }
 }

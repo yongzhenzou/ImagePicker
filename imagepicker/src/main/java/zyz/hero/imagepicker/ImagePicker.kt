@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -18,10 +17,9 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import zyz.hero.imagepicker.sealeds.MediaType
-import zyz.hero.imagepicker.sealeds.ResultType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.utils.FileUtils
-import zyz.hero.imagepicker.utils.TempFragment
+import zyz.hero.imagepicker.utils.SupportFragment
 import java.io.File
 
 /**
@@ -53,7 +51,7 @@ class ImagePicker private constructor() {
      *文件选择类型
      * @see MediaType
      */
-    private var mediaType: MediaType = MediaType.ImageAndVideo
+    private var mediaType: MediaType = MediaType.Image
     private var showLoading: (() -> Unit)? = null
     private var hideLoading: (() -> Unit)? = null
     private var uriResult: ((resourceList: ArrayList<Uri>) -> Unit)? = null
@@ -84,22 +82,31 @@ class ImagePicker private constructor() {
         this.pathResult = pathResult
     }
 
-    fun start(fragmentActivity: FragmentActivity) {
-        realStart(fragmentActivity)
+    fun start(
+        fragmentActivity: FragmentActivity,
+        target: Class<out AppCompatActivity> = ImagePickerActivity::class.java,
+    ) {
+        realStart(fragmentActivity, target)
     }
 
-    fun start(fragment: Fragment) {
-        realStart(fragment.requireActivity())
+    fun start(
+        fragment: Fragment,
+        target: Class<out AppCompatActivity> = ImagePickerActivity::class.java,
+    ) {
+        realStart(fragment.requireActivity(), target)
     }
 
-    private fun realStart(activity: FragmentActivity) {
+    private fun realStart(
+        activity: FragmentActivity,
+        target: Class<out AppCompatActivity> = ImagePickerActivity::class.java,
+    ) {
         if (checkParams()) {
-            TempFragment.requestPermission(activity.supportFragmentManager,
-                permissions = Permission.PERMISSION_CAMERA) {
+            SupportFragment.requestPermission(activity.supportFragmentManager,
+                permissions = if (showCamara) Permission.PERMISSION_CAMERA else Permission.PERMISSION_READ_WRITE) {
                 if (it) {
-                    TempFragment.startActivityForResult(
+                    SupportFragment.startActivityForResult(
                         activity.supportFragmentManager,
-                        ImagePickerActivity::class.java,
+                        target,
                         Bundle().apply {
                             putSerializable("config", PickConfig(
                                 maxCount,
@@ -169,7 +176,7 @@ class ImagePicker private constructor() {
 
     class Builder {
         /**
-         * 选取图片的最大数量
+         * 选取图片和视频的最大数量
          */
         private var maxCount: Int = 9
 

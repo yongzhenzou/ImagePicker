@@ -78,7 +78,10 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
                     if (imageBean.select) {
                         imageBean.select = false
                         selectedData.remove(imageBean)
-                        notifyItemRangeChanged(0, items.size)
+                        notifyItemChanged(items.indexOf(imageBean))
+                        selectedData.filter { it.select }.forEach {
+                            notifyItemChanged(items.indexOf(it))
+                        }
                     } else {
                         if (selectedData.size >= pickConfig.maxCount) {
                             return@setOnClickListener Toast.makeText(

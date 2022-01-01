@@ -4,11 +4,16 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.10555555555555556" />
+        <entry key="../../Library/Android/sdk/platforms/android-30/data/res/layout/progress_dialog.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="imagepicker/src/main/res/drawable/gradient_shadow.xml" value="0.2520833333333333" />
+        <entry key="imagepicker/src/main/res/drawable/image_picker_gradient_shadow.xml" value="0.18854166666666666" />
         <entry key="imagepicker/src/main/res/drawable/shape_circle_stroke.xml" value="0.22916666666666666" />
+        <entry key="imagepicker/src/main/res/drawable/shape_loading_bg.xml" value="0.18854166666666666" />
         <entry key="imagepicker/src/main/res/drawable/shape_select.xml" value="0.20989583333333334" />
         <entry key="imagepicker/src/main/res/layout/activity_imagepicker.xml" value="0.12364130434782608" />
+        <entry key="imagepicker/src/main/res/layout/activity_preview.xml" value="0.13134057971014493" />
+        <entry key="imagepicker/src/main/res/layout/dialog_loading.xml" value="0.1" />
         <entry key="imagepicker/src/main/res/layout/fragment_imagepicker.xml" value="0.1" />
         <entry key="imagepicker/src/main/res/layout/item_image.xml" value="0.335" />
         <entry key="imagepicker/src/main/res/layout/item_image_picker_camera.xml" value="0.33" />
