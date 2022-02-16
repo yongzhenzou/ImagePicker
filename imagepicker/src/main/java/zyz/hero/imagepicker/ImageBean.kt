@@ -3,7 +3,6 @@ package zyz.hero.imagepicker
 import android.net.Uri
 import android.os.Parcel
 import android.os.Parcelable
-import zyz.hero.imagepicker.sealeds.MediaType
 
 /**
  * @author yongzhen_zou@163.com

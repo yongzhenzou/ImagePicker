@@ -13,19 +13,24 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import zyz.hero.imagepicker.*
 import zyz.hero.imagepicker.ext.visible
-import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.sealeds.SelectType
 
 /**
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 1:34 上午
  */
-class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhoto:()->Unit) :
+class ImageAdapter(var context: Context, var pickConfig: PickConfig, val takePhoto: () -> Unit) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    companion object {
+        const val TYPE_CAMARA = 0
+        const val TYPE_RESOURCE = 1
+    }
+
     var items = arrayListOf<ImageBean>()
     var selectedData = arrayListOf<ImageBean>()
     override fun getItemCount(): Int = items.size
     override fun getItemViewType(position: Int): Int {
-       return if (items[position].isCamera) 0 else 1
+        return if (items[position].isCamera) TYPE_CAMARA else TYPE_RESOURCE
     }
 
     open fun concatItems(newItems: MutableList<ImageBean>?) {
@@ -44,27 +49,33 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType==0) CameraHolder(LayoutInflater.from(context).inflate(R.layout.item_image_picker_camera,parent,false)) else ImageHolder(LayoutInflater.from(context).inflate(R.layout.item_image_picker_image, parent, false))
+        return if (viewType == TYPE_CAMARA) CameraHolder(LayoutInflater.from(context)
+            .inflate(R.layout.item_image_picker_camera, parent, false)) else ImageHolder(
+            LayoutInflater.from(context).inflate(R.layout.item_image_picker_image, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (getItemViewType(position)==0){
-           ( holder as CameraHolder)?.also {
-               holder.itemView.setOnClickListener {
-                   takePhoto?.invoke()
-               }
-           }
-        }else{
+        if (getItemViewType(position) == TYPE_CAMARA) {
+            (holder as? CameraHolder)?.also {
+                holder.itemView.setOnClickListener {
+                    takePhoto?.invoke()
+                }
+            }
+        } else {
             (holder as? ImageHolder)?.apply {
                 var imageBean = items[position]
-                select.visible = pickConfig.maxCount > 1
+                select.visible = when (pickConfig.selectType) {
+                    is SelectType.Image -> pickConfig.maxImageCount > 1
+                    is SelectType.Video -> pickConfig.maxVideoCount > 1
+                    else -> true
+                }
                 durationLayout.visible = imageBean.type == TYPE_VIDEO
                 if (imageBean.type == TYPE_VIDEO) {
                     var minutes = imageBean.duration / 1000 / 60
                     var seconds = imageBean.duration / 1000 % 60
                     duration.text = "${minutes}:${if (seconds >= 10) seconds else "0$seconds"}"
                 }
-                loadRes(context,imageBean.uri!!,image)
+                loadRes(context, imageBean.uri!!, image)
                 if (imageBean.select) {
                     select.text = (selectedData.indexOf(imageBean) + 1).toString()
                     select.setBackgroundResource(R.drawable.image_picker_shape_select)
@@ -83,51 +94,18 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
                             notifyItemChanged(items.indexOf(it))
                         }
                     } else {
-                        if (selectedData.size >= pickConfig.maxCount) {
-                            return@setOnClickListener Toast.makeText(
-                                context,
-                                "最多选取${pickConfig.maxCount}张图片或视频",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        when (pickConfig.selectType) {
-                            MediaType.ImageAndVideo -> {
-                                //混合选择是否设置了maxImageCount或者maxVideoCount，只能设置一个
-                                if (imageBean.type == TYPE_IMG) {
-                                    if (pickConfig.maxImageCount != -1) {
-                                        if (selectedData.filter { it.type == TYPE_IMG }.size < pickConfig.maxImageCount) {
-                                            handleSelect(this, imageBean)
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                "最多选取${pickConfig.maxImageCount}张图片",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    } else {
-                                        handleSelect(this, imageBean)
-                                    }
-                                } else {
-                                    if (pickConfig.maxVideoCount != -1) {
-                                        if (selectedData.filter { it.type == TYPE_VIDEO }.size < pickConfig.maxVideoCount) {
-                                            handleSelect(this, imageBean)
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                "最多选取${pickConfig.maxVideoCount}个视频",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    } else {
-                                        handleSelect(this, imageBean)
-                                    }
-                                }
-                            }
-                            else -> {
-                                //选取数量只受maxCount约束
+                        if (imageBean.type == TYPE_IMG) {
+                            if (selectedData.filter { it.type == TYPE_IMG }.size < pickConfig.maxImageCount) {
                                 handleSelect(this, imageBean)
+                            } else {
+                                ImagePicker.log("Select up to ${pickConfig.maxImageCount} pictures")
                             }
-
+                        } else {
+                            if (selectedData.filter { it.type == TYPE_VIDEO }.size < pickConfig.maxVideoCount) {
+                                handleSelect(this, imageBean)
+                            } else {
+                                ImagePicker.log("Select up to ${pickConfig.maxVideoCount} videos")
+                            }
                         }
                     }
                 }
@@ -135,24 +113,16 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
         }
     }
 
-    private fun loadRes(context: Context,uri:Uri,imageView: ImageView) {
+    private fun loadRes(context: Context, uri: Uri, imageView: ImageView) {
         Glide.with(context).load(uri).dontAnimate().into(imageView)
     }
 
     private fun handleSelect(holder: ImageHolder, imageBean: ImageBean) {
-        if (selectedData.size < pickConfig.maxCount) {
-            imageBean.select = true
-            selectedData.add(imageBean)
-            holder.select.text = (selectedData.indexOf(imageBean) + 1).toString()
-            holder.select.setBackgroundResource(R.drawable.image_picker_shape_select)
-            holder.image.alpha = 0.6f
-        } else {
-            Toast.makeText(
-                context,
-                "最多选取${pickConfig.maxCount}张图片或视频",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
+        imageBean.select = true
+        selectedData.add(imageBean)
+        holder.select.text = (selectedData.indexOf(imageBean) + 1).toString()
+        holder.select.setBackgroundResource(R.drawable.image_picker_shape_select)
+        holder.image.alpha = 0.6f
     }
 
     class ImageHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -161,7 +131,8 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig,val takePhot
         var duration = itemView.findViewById<TextView>(R.id.duration)
         var select = itemView.findViewById<TextView>(R.id.select)
     }
-      class CameraHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+    class CameraHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
     }
 

@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.sealeds.SelectType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.utils.FileUtils
 import zyz.hero.imagepicker.utils.SupportFragment
@@ -28,11 +28,6 @@ import java.io.File
  */
 class ImagePicker private constructor() {
     /**
-     * 选取图片的最大数量
-     */
-    private var maxCount: Int = 9
-
-    /**
      *是否显示拍照
      */
     private var showCamara = true
@@ -40,18 +35,18 @@ class ImagePicker private constructor() {
     /**
      *同时选择视频和图片时视频最大可选取数量和maxVideoCount互斥
      */
-    private var maxImageCount: Int = -1
+    private var maxImageCount: Int = 9
 
     /**
      *同时选择视频和图片时视频最大可选取数量和maxImageCount互斥
      */
-    private var maxVideoCount: Int = -1
+    private var maxVideoCount: Int = 9
 
     /**
      *文件选择类型
-     * @see MediaType
+     * @see SelectType
      */
-    private var mediaType: MediaType = MediaType.Image
+    private var selectType: SelectType = SelectType.Image
     private var showLoading: (() -> Unit)? = null
     private var hideLoading: (() -> Unit)? = null
     private var uriResult: ((resourceList: ArrayList<Uri>) -> Unit)? = null
@@ -109,8 +104,7 @@ class ImagePicker private constructor() {
                         target,
                         Bundle().apply {
                             putSerializable("config", PickConfig(
-                                maxCount,
-                                mediaType,
+                                selectType,
                                 showCamara,
                                 maxImageCount,
                                 maxVideoCount,
@@ -148,26 +142,35 @@ class ImagePicker private constructor() {
     }
 
     private fun checkParams(): Boolean {
-        if (maxCount <= 0) {
+        if ((maxImageCount < 0) or (maxVideoCount < 0)) {
             return kotlin.run {
-                Log.e(ImagePicker.TAG, "maxCount must be bigger than 0")
+                log("'maxImageCount' or 'maxVideoCount' can not be smaller than 0")
                 false
             }
         }
-        if (mediaType == MediaType.ImageAndVideo) {
-            if ((maxImageCount > -1 && maxVideoCount > -1)) {
-                return kotlin.run {
-                    Log.e(ImagePicker.TAG,
-                        "Only one of 'maxImageCount' and 'maxVideoCount' can be set when mixing selection")
-
-                    false
+        when (selectType) {
+            is SelectType.Image -> {
+                if (maxImageCount <= 0) {
+                    return kotlin.run {
+                        log("maxImageCount must be greater than 0 when selecting pictures")
+                        false
+                    }
                 }
             }
-            if (((maxImageCount > maxCount) or (maxVideoCount > maxCount))) {
-                return kotlin.run {
-                    Log.e(ImagePicker.TAG,
-                        "During mixed selection, only one 'maxImageCount' and 'maxVideoCount' can be set, and must be less than or equal to 'maxCount'")
-                    false
+            is SelectType.Video -> {
+                if (maxVideoCount <= 0) {
+                    return kotlin.run {
+                        log("maxVideoCount must be greater than 0 when selecting videos")
+                        false
+                    }
+                }
+            }
+            is SelectType.ImageAndVideo -> {
+                if (maxImageCount <= 0 && maxVideoCount <= 0) {
+                    return kotlin.run {
+                        log("When selecting pictures and videos, at least one of maxImageCount and maxVideoCount must be greater than 0")
+                        false
+                    }
                 }
             }
         }
@@ -176,40 +179,32 @@ class ImagePicker private constructor() {
 
     class Builder {
         /**
-         * 选取图片和视频的最大数量
-         */
-        private var maxCount: Int = 9
-
-        /**
          *是否显示拍照
          */
         private var showCamara = true
 
         /**
-         *同时选择视频和图片时视频最大可选取数量和maxVideoCount互斥
+         *选取图片的最大数量
          */
-        private var maxImageCount: Int = -1
+        private var maxImageCount: Int = 9
 
         /**
-         *同时选择视频和图片时视频最大可选取数量和maxImageCount互斥
+         *选取视频的最大数量
          */
-        private var maxVideoCount: Int = -1
+        private var maxVideoCount: Int = 9
 
         /**
          *文件选择类型
-         * @see MediaType
+         * @see SelectType
          */
-        private var mediaType: MediaType = MediaType.ImageAndVideo
-        fun maxCount(count: Int) = apply {
-            this.maxCount = count
-        }
+        private var selectType: SelectType = SelectType.ImageAndVideo
 
         fun showCamara(showCamara: Boolean) = apply {
             this.showCamara = showCamara
         }
 
-        fun mediaType(mediaType: MediaType) = apply {
-            this.mediaType = mediaType
+        fun mediaType(selectType: SelectType) = apply {
+            this.selectType = selectType
         }
 
         fun maxImageCount(maxImageCount: Int) = apply {
@@ -221,11 +216,10 @@ class ImagePicker private constructor() {
         }
 
         fun build() = ImagePicker().also {
-            it.maxCount = maxCount
             it.maxImageCount = maxImageCount
             it.maxVideoCount = maxVideoCount
             it.showCamara = showCamara
-            it.mediaType = mediaType
+            it.selectType = selectType
         }
 
 
@@ -233,6 +227,9 @@ class ImagePicker private constructor() {
 
     companion object {
         const val TAG = "ImagePicker"
+        fun log(content: String) {
+            Log.e("$TAG: ", content)
+        }
 
         /**
          * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存

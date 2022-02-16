@@ -6,7 +6,6 @@ import android.provider.MediaStore
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.TYPE_VIDEO
-import zyz.hero.imagepicker.sealeds.MediaType
 
 /**
  * @author yongzhen_zou@163.com

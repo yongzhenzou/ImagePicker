@@ -14,7 +14,7 @@ import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.PickConfig
 import zyz.hero.imagepicker.R
 import zyz.hero.imagepicker.TYPE_IMG
-import zyz.hero.imagepicker.sealeds.MediaType
+import zyz.hero.imagepicker.sealeds.SelectType
 import zyz.hero.imagepicker.ui.ImageAdapter
 import zyz.hero.imagepicker.utils.ResUtils
 import zyz.hero.imagepicker.utils.SupportFragment
@@ -28,7 +28,7 @@ abstract class BaseImagePickerFragment : Fragment() {
     private val pickConfig: PickConfig by lazy {
         arguments?.getSerializable("config") as PickConfig
     }
-    var mediaType: MediaType? = null  //1：视频和图片、2：图片、3：视频
+    var mediaType: SelectType? = null  //1：视频和图片、2：图片、3：视频
     var mediaList = mutableListOf<ImageBean>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +86,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             mediaList.clear()
                 withContext(Dispatchers.IO) {
                     when (mediaType) {
-                        is MediaType.ImageAndVideo -> {
+                        is SelectType.ImageAndVideo -> {
                             var images = async{ ResUtils.getImageData(requireContext()) }
                             var videos = async { ResUtils.getVideoData(requireContext()) }
                             mediaList.apply {
@@ -94,13 +94,13 @@ abstract class BaseImagePickerFragment : Fragment() {
                                 addAll(videos.await())
                             }
                         }
-                        is MediaType.Image -> {
+                        is SelectType.Image -> {
                             var images = async{ ResUtils.getImageData(requireContext()) }
                             mediaList.apply {
                                 addAll(images.await())
                             }
                         }
-                        is MediaType.Video -> {
+                        is SelectType.Video -> {
                             var videos = async { ResUtils.getVideoData(requireContext()) }
                             mediaList.apply {
                                 addAll(videos.await())

@@ -4,8 +4,7 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import zyz.hero.imagepicker.ext.pickResource
-import zyz.hero.imagepicker.sealeds.MediaType
-import zyz.hero.imagepicker.utils.SupportFragment
+import zyz.hero.imagepicker.sealeds.SelectType
 
 /**
  * @author yongzhen_zou@163.com
@@ -17,10 +16,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         findViewById<Button>(R.id.select).setOnClickListener { view ->
             pickResource {
-                maxCount(8)
+                mediaType(SelectType.ImageAndVideo)
                 maxImageCount(6)
-                mediaType(MediaType.ImageAndVideo)
-
+                maxVideoCount(9)
             }.asFile {
 
             }.start(this)
