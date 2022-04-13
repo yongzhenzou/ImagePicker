@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.flow
 import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.PickConfig
 import zyz.hero.imagepicker.R
@@ -29,6 +30,7 @@ abstract class BaseImagePickerFragment : Fragment() {
         arguments?.getSerializable("config") as PickConfig
     }
     var mediaType: SelectType? = null  //1：视频和图片、2：图片、3：视频
+    var queryJob: Job? = null
     var mediaList = mutableListOf<ImageBean>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,36 +83,37 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
 
     private fun initData() {
-        lifecycleScope.launch {
+        queryJob?.cancel()
+        queryJob = lifecycleScope.launch {
             showLoading()
             mediaList.clear()
-                withContext(Dispatchers.IO) {
-                    when (mediaType) {
-                        is SelectType.ImageAndVideo -> {
-                            var images = async{ ResUtils.getImageData(requireContext()) }
-                            var videos = async { ResUtils.getVideoData(requireContext()) }
-                            mediaList.apply {
-                                addAll(images.await())
-                                addAll(videos.await())
-                            }
-                        }
-                        is SelectType.Image -> {
-                            var images = async{ ResUtils.getImageData(requireContext()) }
-                            mediaList.apply {
-                                addAll(images.await())
-                            }
-                        }
-                        is SelectType.Video -> {
-                            var videos = async { ResUtils.getVideoData(requireContext()) }
-                            mediaList.apply {
-                                addAll(videos.await())
-                            }
+            withContext(Dispatchers.IO) {
+                when (mediaType) {
+                    is SelectType.ImageAndVideo -> {
+                        var images = async { ResUtils.getImageData(requireContext()) }
+                        var videos = async { ResUtils.getVideoData(requireContext()) }
+                        mediaList.apply {
+                            addAll(images.await())
+                            addAll(videos.await())
                         }
                     }
-                    mediaList?.sortByDescending { it.date }
+                    is SelectType.Image -> {
+                        var images = async { ResUtils.getImageData(requireContext()) }
+                        mediaList.apply {
+                            addAll(images.await())
+                        }
+                    }
+                    is SelectType.Video -> {
+                        var videos = async { ResUtils.getVideoData(requireContext()) }
+                        mediaList.apply {
+                            addAll(videos.await())
+                        }
+                    }
                 }
-                hideLoading()
-                refreshData()
+                mediaList?.sortByDescending { it.date }
+            }
+            hideLoading()
+            refreshData()
         }
     }
 
@@ -123,6 +126,11 @@ abstract class BaseImagePickerFragment : Fragment() {
                 putSerializable("config", pickConfig)
             }
         }
+    }
+
+    override fun onDestroy() {
+        queryJob?.cancel()
+        super.onDestroy()
     }
 
     abstract fun hideLoading()
