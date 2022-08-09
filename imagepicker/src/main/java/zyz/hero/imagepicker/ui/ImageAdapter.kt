@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -26,21 +25,21 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig, val takePho
         const val TYPE_RESOURCE = 1
     }
 
-    var items = arrayListOf<ImageBean>()
-    var selectedData = arrayListOf<ImageBean>()
+    var items = arrayListOf<ResBean>()
+    var selectedData = arrayListOf<ResBean>()
     override fun getItemCount(): Int = items.size
     override fun getItemViewType(position: Int): Int {
         return if (items[position].isCamera) TYPE_CAMARA else TYPE_RESOURCE
     }
 
-    open fun concatItems(newItems: MutableList<ImageBean>?) {
+    open fun concatItems(newItems: MutableList<ResBean>?) {
         if (newItems != null && newItems.size > 0) {
             items.addAll(newItems)
             notifyDataSetChanged()
         }
     }
 
-    open fun refreshItems(newItems: MutableList<ImageBean>?) {
+    open fun refreshItems(newItems: MutableList<ResBean>?) {
         if (newItems != null) {
             items.clear()
             items.addAll(newItems)
@@ -117,7 +116,7 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig, val takePho
         Glide.with(context).load(uri).dontAnimate().into(imageView)
     }
 
-    private fun handleSelect(holder: ImageHolder, imageBean: ImageBean) {
+    private fun handleSelect(holder: ImageHolder, imageBean: ResBean) {
         imageBean.select = true
         selectedData.add(imageBean)
         holder.select.text = (selectedData.indexOf(imageBean) + 1).toString()

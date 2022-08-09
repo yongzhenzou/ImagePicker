@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import zyz.hero.imagepicker.sealeds.SelectType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.utils.FileUtils
 import zyz.hero.imagepicker.utils.SupportFragment
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 /**
  * @author yongzhen_zou@163.com
@@ -113,14 +115,15 @@ class ImagePicker private constructor() {
 
                     ) { code, data ->
                         if (code == Activity.RESULT_OK) {
-                            (data?.getSerializableExtra("result") as? ArrayList<ImageBean>)?.let { dataList ->
+                            (data?.getSerializableExtra("result") as? ArrayList<ResBean>)?.let { dataList ->
                                 uriResult?.invoke(arrayListOf<Uri>().apply {
                                     dataList.mapTo(this) { it.uri!! }
                                 })
                                 fileResult?.let {
                                     activity.lifecycleScope.launch {
                                         showLoading?.invoke()
-                                        it.invoke(FileUtils.uriToFile(activity, dataList))
+                                        var uriToFile  = FileUtils.uriToFile(activity, dataList)
+                                        it.invoke(uriToFile)
                                         hideLoading?.invoke()
                                     }
                                 }
@@ -165,7 +168,7 @@ class ImagePicker private constructor() {
                     }
                 }
             }
-            is SelectType.ImageAndVideo -> {
+            is SelectType.All -> {
                 if (maxImageCount <= 0 && maxVideoCount <= 0) {
                     return kotlin.run {
                         log("When selecting pictures and videos, at least one of maxImageCount and maxVideoCount must be greater than 0")
@@ -197,13 +200,13 @@ class ImagePicker private constructor() {
          *文件选择类型
          * @see SelectType
          */
-        private var selectType: SelectType = SelectType.ImageAndVideo
+        private var selectType: SelectType = SelectType.All
 
         fun showCamara(showCamara: Boolean) = apply {
             this.showCamara = showCamara
         }
 
-        fun mediaType(selectType: SelectType) = apply {
+        fun selectType(selectType: SelectType) = apply {
             this.selectType = selectType
         }
 
@@ -228,7 +231,10 @@ class ImagePicker private constructor() {
     companion object {
         const val TAG = "ImagePicker"
         fun log(content: String) {
-            Log.e("$TAG: ", content)
+            if ( BuildConfig.DEBUG){
+                Log.e("$TAG: ", content)
+            }
+
         }
 
         /**

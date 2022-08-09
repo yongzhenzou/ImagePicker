@@ -3,21 +3,15 @@ package zyz.hero.imagepicker.utils
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
-import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import zyz.hero.imagepicker.ImageBean
 import zyz.hero.imagepicker.ImagePicker
+import zyz.hero.imagepicker.ResBean
 import java.io.File
 import java.io.FileOutputStream
-import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * @author yongzhen_zou@163.com
@@ -35,9 +29,9 @@ class FileUtils {
 
         suspend fun uriToFile(
             activity: FragmentActivity,
-            dataList: ArrayList<ImageBean>,
+            dataList: ArrayList<ResBean>,
         ) = withContext(Dispatchers.IO) {
-            dataList.map {
+          return@withContext  dataList.map {
                 async {
                     activity.contentResolver.openInputStream(it.uri!!).use { inputStream ->
                         var dir = File(ImagePicker.getTempDir(activity))
@@ -52,7 +46,7 @@ class FileUtils {
                         file
                     }
                 }
-            }.mapTo(arrayListOf()) {
+            }.mapTo(arrayListOf()){
                 it.await()
             }
         }

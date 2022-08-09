@@ -1,10 +1,12 @@
 package zyz.hero.imagepicker
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import zyz.hero.imagepicker.ext.pickResource
 import zyz.hero.imagepicker.sealeds.SelectType
+import zyz.hero.imagepicker.ui.dialog.SimpleLoadingDialog
 
 /**
  * @author yongzhen_zou@163.com
@@ -14,12 +16,17 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        var loadingDialog = SimpleLoadingDialog()
         findViewById<Button>(R.id.select).setOnClickListener { view ->
             pickResource {
-                mediaType(SelectType.ImageAndVideo)
+                selectType(SelectType.All)
                 maxImageCount(6)
                 maxVideoCount(9)
-            }.asFile {
+            }.asFile(showLoading = {
+                loadingDialog.show(supportFragmentManager,null)
+            }, hideLoading = {
+                loadingDialog.dismiss()
+            }){
 
             }.start(this)
         }

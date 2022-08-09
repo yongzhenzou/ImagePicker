@@ -8,7 +8,7 @@ import android.os.Parcelable
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 6:38 下午
  */
-data class ImageBean(
+data class ResBean(
     var uri: Uri? = null,
     var name: String? = null,
     var type: String? = null,
@@ -44,12 +44,12 @@ data class ImageBean(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<ImageBean> {
-        override fun createFromParcel(parcel: Parcel): ImageBean {
-            return ImageBean(parcel)
+    companion object CREATOR : Parcelable.Creator<ResBean> {
+        override fun createFromParcel(parcel: Parcel): ResBean {
+            return ResBean(parcel)
         }
 
-        override fun newArray(size: Int): Array<ImageBean?> {
+        override fun newArray(size: Int): Array<ResBean?> {
             return arrayOfNulls(size)
         }
     }

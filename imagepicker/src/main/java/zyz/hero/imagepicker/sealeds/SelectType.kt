@@ -9,5 +9,5 @@ import java.io.Serializable
 sealed class SelectType:Serializable {
     object Image : SelectType()
     object Video : SelectType()
-    object ImageAndVideo : SelectType()
+    object All : SelectType()
 }

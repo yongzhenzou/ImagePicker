@@ -10,8 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.flow
-import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.ResBean
 import zyz.hero.imagepicker.PickConfig
 import zyz.hero.imagepicker.R
 import zyz.hero.imagepicker.TYPE_IMG
@@ -31,7 +30,7 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
     var mediaType: SelectType? = null  //1：视频和图片、2：图片、3：视频
     var queryJob: Job? = null
-    var mediaList = mutableListOf<ImageBean>()
+    var mediaList = mutableListOf<ResBean>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         retainInstance = true
@@ -42,10 +41,7 @@ abstract class BaseImagePickerFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        require(pickConfig != null) {
-            "pickConfig can not be null"
-        }
-        mediaType = pickConfig?.selectType
+        mediaType = pickConfig.selectType
         return inflater.inflate(R.layout.fragment_imagepicker, container, false)
     }
 
@@ -53,7 +49,7 @@ abstract class BaseImagePickerFragment : Fragment() {
         recycler = view.findViewById(R.id.recycler) as RecyclerView
         recycler.layoutManager = GridLayoutManager(requireContext(), 4)
         (recycler.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
-        recycler.adapter = ImageAdapter(requireContext(), pickConfig!!) {
+        recycler.adapter = ImageAdapter(requireContext(), pickConfig) {
             takePhoto()
         }
         initData()
@@ -64,7 +60,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             if (pickConfig.showCamara) {
                 data?.let {
                     (recycler.adapter as ImageAdapter).apply {
-                        items.add(1, ImageBean(it.uri, it.name, TYPE_IMG))
+                        items.add(1, ResBean(it.uri, it.name, TYPE_IMG))
                         notifyItemInserted(1)
                     }
                 }
@@ -76,7 +72,7 @@ abstract class BaseImagePickerFragment : Fragment() {
     private fun refreshData() {
         if (!mediaList.isNullOrEmpty()) {
             if (pickConfig.showCamara) {
-                mediaList.add(0, ImageBean(isCamera = true))
+                mediaList.add(0, ResBean(isCamera = true))
             }
             (recycler.adapter as ImageAdapter).refreshItems(mediaList)
         }
@@ -89,7 +85,7 @@ abstract class BaseImagePickerFragment : Fragment() {
             mediaList.clear()
             withContext(Dispatchers.IO) {
                 when (mediaType) {
-                    is SelectType.ImageAndVideo -> {
+                    is SelectType.All -> {
                         var images = async { ResUtils.getImageData(requireContext()) }
                         var videos = async { ResUtils.getVideoData(requireContext()) }
                         mediaList.apply {

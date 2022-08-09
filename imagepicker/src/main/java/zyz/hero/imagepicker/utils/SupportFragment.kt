@@ -11,7 +11,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.ResBean
 import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import java.io.File
@@ -58,7 +58,7 @@ class SupportFragment : Fragment() {
     }
 
     var onResult: ((resultCode: Int, data: Intent?) -> Unit)? = null
-    var captureResult: ((ImageBean?) -> Unit)? = null
+    var captureResult: ((ResBean?) -> Unit)? = null
     var onPermissionResult: ((havePermission: Boolean) -> Unit)? = null
     var mFragmentManager: FragmentManager? = null
 
@@ -101,7 +101,7 @@ class SupportFragment : Fragment() {
 
         fun takePhoto(
             fragmentManager: FragmentManager?,
-            captureResult: (ImageBean?) -> Unit = { },
+            captureResult: (ResBean?) -> Unit = { },
         ) {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
@@ -116,7 +116,7 @@ class SupportFragment : Fragment() {
         private const val TAG = "TempFragment"
         private const val REQUEST_CODE = 502
     }
-    var imageBean:ImageBean? = null
+    var imageBean:ResBean? = null
     private fun takePhoto() {
         var fileDir = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.path)
         if (!fileDir.exists()){
@@ -134,7 +134,7 @@ class SupportFragment : Fragment() {
         }
         values.put(MediaStore.Images.Media.MIME_TYPE,"image/JPEG")
         var uri = requireActivity().contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)!!
-        imageBean = ImageBean(uri,fileName, TYPE_IMG)
+        imageBean = ResBean(uri,fileName, TYPE_IMG)
         startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             putExtra(MediaStore.EXTRA_OUTPUT, uri)
         }, REQUEST_CODE)

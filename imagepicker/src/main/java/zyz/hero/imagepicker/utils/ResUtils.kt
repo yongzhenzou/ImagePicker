@@ -3,7 +3,7 @@ package zyz.hero.imagepicker.utils
 import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
-import zyz.hero.imagepicker.ImageBean
+import zyz.hero.imagepicker.ResBean
 import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.TYPE_VIDEO
 
@@ -12,8 +12,8 @@ import zyz.hero.imagepicker.TYPE_VIDEO
  * @date 2021/12/8 7:46 下午
  */
 object ResUtils {
-    fun getImageData(context: Context): MutableList<ImageBean> {
-        var dataList = mutableListOf<ImageBean>()
+    fun getImageData(context: Context): MutableList<ResBean> {
+        var dataList = mutableListOf<ResBean>()
         val imageCursor = context.contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -25,7 +25,7 @@ object ResUtils {
         imageCursor?.use {
             while (it.moveToNext()) {
                 dataList?.add(
-                    ImageBean(
+                    ResBean(
                         ContentUris.withAppendedId(
                             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                             it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID))
@@ -45,8 +45,8 @@ object ResUtils {
         return dataList
     }
 
-    fun getVideoData(context: Context): MutableList<ImageBean> {
-        var dataList = mutableListOf<ImageBean>()
+    fun getVideoData(context: Context): MutableList<ResBean> {
+        var dataList = mutableListOf<ResBean>()
         val videoCursor = context.contentResolver.query(
             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
             null,
@@ -57,7 +57,7 @@ object ResUtils {
         videoCursor?.use {
             while (it.moveToNext()) {
                 dataList.add(
-                    ImageBean(
+                    ResBean(
                         ContentUris.withAppendedId(
                             MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                             it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns._ID))
