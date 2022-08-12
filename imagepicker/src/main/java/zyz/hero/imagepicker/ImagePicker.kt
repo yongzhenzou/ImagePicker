@@ -155,9 +155,9 @@ class ImagePicker private constructor() {
                                         }
                                     }
                                 }
-                                if (imageLoader != null) {
-                                    imageLoaders.remove(id)
-                                }
+                            }
+                            if (imageLoader != null) {
+                                imageLoaders.remove(id)
                             }
                         }
                     }
