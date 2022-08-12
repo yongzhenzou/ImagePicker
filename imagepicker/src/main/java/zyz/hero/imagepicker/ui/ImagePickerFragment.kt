@@ -8,7 +8,7 @@ import zyz.hero.imagepicker.ui.dialog.SimpleLoadingDialog
  * @date 2021/8/29 12:06 上午
  */
 class ImagePickerFragment : BaseImagePickerFragment() {
-    val progressDialog :SimpleLoadingDialog by lazy {
+    val progressDialog: SimpleLoadingDialog by lazy {
         SimpleLoadingDialog()
     }
 
@@ -17,7 +17,7 @@ class ImagePickerFragment : BaseImagePickerFragment() {
     }
 
     override fun showLoading() {
-        progressDialog.show(childFragmentManager,null)
+        progressDialog.show(childFragmentManager, null)
     }
 
 }

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
-import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Color
 import android.graphics.drawable.ShapeDrawable
@@ -15,13 +14,7 @@ import android.os.Handler
 import android.os.Message
 import android.util.DisplayMetrics
 import android.util.TypedValue
-import android.view.Gravity
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
-import android.view.WindowManager
+import android.view.*
 import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.FloatRange
@@ -84,7 +77,8 @@ abstract class BaseDialogFragment : DialogFragment() {
 
     override fun onStart() {
         if (view != null && mMaxHeight > 0) {
-            view?.viewTreeObserver?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            view?.viewTreeObserver?.addOnGlobalLayoutListener(object :
+                ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
                     val height = view?.height
                     val screenHeight = systemBarConfig?.screenHeight
@@ -92,7 +86,7 @@ abstract class BaseDialogFragment : DialogFragment() {
                     if (height ?: 0 > maxHeight) {
                         view?.viewTreeObserver?.removeOnGlobalLayoutListener(this)
                         view?.layoutParams = FrameLayout.LayoutParams(
-                                FrameLayout.LayoutParams.MATCH_PARENT, maxHeight)
+                            FrameLayout.LayoutParams.MATCH_PARENT, maxHeight)
                     }
                 }
             })
@@ -104,7 +98,8 @@ abstract class BaseDialogFragment : DialogFragment() {
             setDialogGravity(dialog) //设置对话框布局
 
             if (mSystemUiVisibility != 0) {
-                dialog.window!!.setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                dialog.window!!.setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
             }
             if (mCanceledBack) {
                 dialog.setOnKeyListener { _, keyCode, _ ->
@@ -139,17 +134,35 @@ abstract class BaseDialogFragment : DialogFragment() {
         outState.putInt(SAVED_Y, mY)
     }
 
-    class CircleDrawable(backgroundColor: Int, leftTopRadius: Int, rightTopRadius: Int, rightBottomRadius: Int, leftBottomRadius: Int) : ShapeDrawable() {
+    class CircleDrawable(
+        backgroundColor: Int,
+        leftTopRadius: Int,
+        rightTopRadius: Int,
+        rightBottomRadius: Int,
+        leftBottomRadius: Int,
+    ) : ShapeDrawable() {
 
-        constructor(backgroundColor: Int, radius: Int) : this(backgroundColor, radius, radius, radius, radius)
+        constructor(backgroundColor: Int, radius: Int) : this(backgroundColor,
+            radius,
+            radius,
+            radius,
+            radius)
 
         init {
             paint.color = backgroundColor //内部填充颜色
             //圆角半径
-            shape = getRoundRectShape(leftTopRadius, rightTopRadius, rightBottomRadius, leftBottomRadius)
+            shape = getRoundRectShape(leftTopRadius,
+                rightTopRadius,
+                rightBottomRadius,
+                leftBottomRadius)
         }
 
-        private fun getRoundRectShape(leftTop: Int, rightTop: Int, rightBottom: Int, leftBottom: Int): RoundRectShape {
+        private fun getRoundRectShape(
+            leftTop: Int,
+            rightTop: Int,
+            rightBottom: Int,
+            leftBottom: Int,
+        ): RoundRectShape {
             val outerRadii = FloatArray(8)
             if (leftTop > 0) {
                 outerRadii[0] = leftTop.toFloat()
@@ -173,9 +186,14 @@ abstract class BaseDialogFragment : DialogFragment() {
     }
 
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
         val view = createView(context, inflater, container)
-        val circleDrawable = CircleDrawable(mBackgroundColor, dp2px(requireContext(), mRadius.toFloat()))
+        val circleDrawable =
+            CircleDrawable(mBackgroundColor, dp2px(requireContext(), mRadius.toFloat()))
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             view.background = circleDrawable
         } else {
@@ -186,7 +204,11 @@ abstract class BaseDialogFragment : DialogFragment() {
         return view
     }
 
-    abstract fun createView(context: Context?, inflater: LayoutInflater, container: ViewGroup?): View
+    abstract fun createView(
+        context: Context?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+    ): View
 
     /**
      * 设置对话框位置
@@ -424,8 +446,11 @@ abstract class BaseDialogFragment : DialogFragment() {
 
 
     }
+
     fun dp2px(context: Context, value: Float): Int {
-        return (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, context.resources.displayMetrics) + 0.5f).toInt()
+        return (TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+            value,
+            context.resources.displayMetrics) + 0.5f).toInt()
     }
 
     companion object {
@@ -453,6 +478,7 @@ abstract class BaseDialogFragment : DialogFragment() {
         } catch (ignored: IllegalStateException) {
         }
     }
+
     override fun dismiss() {
         try {
             dismissAllowingStateLoss()

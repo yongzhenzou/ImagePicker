@@ -12,7 +12,7 @@ import zyz.hero.imagepicker.R
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 12:06 上午
  */
-class ImagePickerActivity: AppCompatActivity() {
+class ImagePickerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_imagepicker)
@@ -26,8 +26,8 @@ class ImagePickerActivity: AppCompatActivity() {
             ).commitNow()
         }
         findViewById<Button>(R.id.complete).setOnClickListener {
-            setResult(Activity.RESULT_OK,Intent().apply {
-                putExtra("result",newInstance.complete())
+            setResult(Activity.RESULT_OK, Intent().apply {
+                putExtra("result", newInstance.complete())
             })
             finish()
         }

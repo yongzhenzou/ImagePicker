@@ -17,7 +17,7 @@ import java.io.FileOutputStream
  * @author yongzhen_zou@163.com
  * @date 2021/12/7 5:52 下午
  */
-class FileUtils {
+internal class FileUtils {
     companion object {
         fun getFileUri(context: Context, filePath: String): Uri {
             var file = File(filePath)
@@ -31,7 +31,7 @@ class FileUtils {
             activity: FragmentActivity,
             dataList: ArrayList<ResBean>,
         ) = withContext(Dispatchers.IO) {
-          return@withContext  dataList.map {
+            return@withContext dataList.map {
                 async {
                     activity.contentResolver.openInputStream(it.uri!!).use { inputStream ->
                         var dir = File(ImagePicker.getTempDir(activity))
@@ -46,7 +46,7 @@ class FileUtils {
                         file
                     }
                 }
-            }.mapTo(arrayListOf()){
+            }.mapTo(arrayListOf()) {
                 it.await()
             }
         }

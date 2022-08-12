@@ -1,7 +1,6 @@
 package zyz.hero.imagepicker
 
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import zyz.hero.imagepicker.ext.pickResource
@@ -19,9 +18,9 @@ class MainActivity : AppCompatActivity() {
         var loadingDialog = SimpleLoadingDialog()
         findViewById<Button>(R.id.select).setOnClickListener { view ->
             pickResource {
-                selectType(SelectType.All)
-                maxImageCount(6)
-                maxVideoCount(9)
+                setSelectType(SelectType.Image)
+                setMaxImageCount(6)
+                setMaxVideoCount(9)
             }.asFile(showLoading = {
                 loadingDialog.show(supportFragmentManager,null)
             }, hideLoading = {

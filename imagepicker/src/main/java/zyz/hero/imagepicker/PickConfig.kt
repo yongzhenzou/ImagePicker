@@ -10,6 +10,7 @@ import java.io.Serializable
 data class PickConfig(
     var selectType: SelectType = SelectType.Image,
     var showCamara: Boolean = true,
-    var maxImageCount:Int = 9,
-    var maxVideoCount:Int = 9,
+    var maxImageCount: Int = 9,
+    var maxVideoCount: Int = 9,
+    var imageLoaderId: Int = -1,
 ) : Serializable

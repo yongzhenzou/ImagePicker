@@ -9,9 +9,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import zyz.hero.imagepicker.*
 import zyz.hero.imagepicker.ext.visible
+import zyz.hero.imagepicker.imageLoader.DefaultImageLoader
 import zyz.hero.imagepicker.sealeds.SelectType
 
 /**
@@ -113,7 +113,13 @@ class ImageAdapter(var context: Context, var pickConfig: PickConfig, val takePho
     }
 
     private fun loadRes(context: Context, uri: Uri, imageView: ImageView) {
-        Glide.with(context).load(uri).dontAnimate().into(imageView)
+        if (pickConfig.imageLoaderId != -1 && ImagePicker.imageLoaders[pickConfig.imageLoaderId] != null) {
+            ImagePicker.imageLoaders[pickConfig.imageLoaderId]?.load(context, uri, imageView)
+        } else if (ImagePicker.globalImageLoader != null) {
+            ImagePicker.globalImageLoader?.load(context, uri, imageView)
+        } else {
+            DefaultImageLoader().load(context, uri, imageView)
+        }
     }
 
     private fun handleSelect(holder: ImageHolder, imageBean: ResBean) {

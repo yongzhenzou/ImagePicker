@@ -17,7 +17,7 @@ import zyz.hero.imagepicker.TYPE_IMG
 import zyz.hero.imagepicker.sealeds.SelectType
 import zyz.hero.imagepicker.ui.ImageAdapter
 import zyz.hero.imagepicker.utils.ResUtils
-import zyz.hero.imagepicker.utils.SupportFragment
+import zyz.hero.imagepicker.utils.HelperFragment
 
 /**
  * @author yongzhen_zou@163.com
@@ -56,7 +56,7 @@ abstract class BaseImagePickerFragment : Fragment() {
     }
 
     private fun takePhoto() {
-        SupportFragment.takePhoto(childFragmentManager) { data ->
+        HelperFragment.takePhoto(childFragmentManager) { data ->
             if (pickConfig.showCamara) {
                 data?.let {
                     (recycler.adapter as ImageAdapter).apply {

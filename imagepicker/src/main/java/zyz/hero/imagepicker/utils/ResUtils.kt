@@ -2,6 +2,7 @@ package zyz.hero.imagepicker.utils
 
 import android.content.ContentUris
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 import zyz.hero.imagepicker.ResBean
 import zyz.hero.imagepicker.TYPE_IMG
@@ -24,6 +25,17 @@ object ResUtils {
 
         imageCursor?.use {
             while (it.moveToNext()) {
+                var uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaStore.setRequireOriginal(ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID))
+                    ))
+                } else {
+                    ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        it.getLong(it.getColumnIndexOrThrow(MediaStore.Images.ImageColumns._ID))
+                    )
+                }
                 dataList?.add(
                     ResBean(
                         ContentUris.withAppendedId(
@@ -56,6 +68,17 @@ object ResUtils {
         )
         videoCursor?.use {
             while (it.moveToNext()) {
+                var uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    MediaStore.setRequireOriginal(ContentUris.withAppendedId(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns._ID))
+                    ))
+                } else {
+                    ContentUris.withAppendedId(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        it.getLong(it.getColumnIndexOrThrow(MediaStore.Video.VideoColumns._ID))
+                    )
+                }
                 dataList.add(
                     ResBean(
                         ContentUris.withAppendedId(

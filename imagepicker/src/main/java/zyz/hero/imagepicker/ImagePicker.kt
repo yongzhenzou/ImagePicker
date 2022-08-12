@@ -16,19 +16,31 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import zyz.hero.imagepicker.imageLoader.ImageLoader
 import zyz.hero.imagepicker.sealeds.SelectType
 import zyz.hero.imagepicker.ui.ImagePickerActivity
 import zyz.hero.imagepicker.utils.FileUtils
-import zyz.hero.imagepicker.utils.SupportFragment
+import zyz.hero.imagepicker.utils.HelperFragment
 import java.io.File
-import kotlin.system.measureTimeMillis
 
 /**
  * @author yongzhen_zou@163.com
  * @date 2021/8/29 12:06 上午
  */
 class ImagePicker private constructor() {
+    private val id by lazy {
+        generateId()
+    }
+
+    /**
+     * 图片加载器
+     */
+    private var imageLoader: ImageLoader? = null
+        set(value) {
+            imageLoaders[id] = value
+            field = value
+        }
+
     /**
      *是否显示拍照
      */
@@ -98,42 +110,49 @@ class ImagePicker private constructor() {
         target: Class<out AppCompatActivity> = ImagePickerActivity::class.java,
     ) {
         if (checkParams()) {
-            SupportFragment.requestPermission(activity.supportFragmentManager,
+            HelperFragment.requestPermission(activity.supportFragmentManager,
                 permissions = if (showCamara) Permission.PERMISSION_CAMERA else Permission.PERMISSION_READ_WRITE) {
-                if (it) {
-                    SupportFragment.startActivityForResult(
-                        activity.supportFragmentManager,
-                        target,
-                        Bundle().apply {
-                            putSerializable("config", PickConfig(
-                                selectType,
-                                showCamara,
-                                maxImageCount,
-                                maxVideoCount,
-                            ))
-                        }
+                if (it) {//这里再申请一遍权限，防止ACCESS_MEDIA_LOCATION错误
+                    HelperFragment.requestPermission(activity.supportFragmentManager,
+                        permissions = if (showCamara) Permission.PERMISSION_CAMERA else Permission.PERMISSION_READ_WRITE) {
+                        HelperFragment.startActivityForResult(
+                            activity.supportFragmentManager,
+                            target,
+                            Bundle().apply {
+                                putSerializable("config", PickConfig(
+                                    selectType,
+                                    showCamara,
+                                    maxImageCount,
+                                    maxVideoCount,
+                                    imageLoaderId = if (imageLoader == null) -1 else id
+                                ))
+                            }
 
-                    ) { code, data ->
-                        if (code == Activity.RESULT_OK) {
-                            (data?.getSerializableExtra("result") as? ArrayList<ResBean>)?.let { dataList ->
-                                uriResult?.invoke(arrayListOf<Uri>().apply {
-                                    dataList.mapTo(this) { it.uri!! }
-                                })
-                                fileResult?.let {
-                                    activity.lifecycleScope.launch {
-                                        showLoading?.invoke()
-                                        var uriToFile  = FileUtils.uriToFile(activity, dataList)
-                                        it.invoke(uriToFile)
-                                        hideLoading?.invoke()
+                        ) { code, data ->
+                            if (code == Activity.RESULT_OK) {
+                                (data?.getSerializableExtra("result") as? ArrayList<ResBean>)?.let { dataList ->
+                                    uriResult?.invoke(arrayListOf<Uri>().apply {
+                                        dataList.mapTo(this) { it.uri!! }
+                                    })
+                                    fileResult?.let {
+                                        activity.lifecycleScope.launch {
+                                            showLoading?.invoke()
+                                            var uriToFile = FileUtils.uriToFile(activity, dataList)
+                                            it.invoke(uriToFile)
+                                            hideLoading?.invoke()
+                                        }
+                                    }
+                                    pathResult?.let {
+                                        activity.lifecycleScope.launch {
+                                            showLoading?.invoke()
+                                            it.invoke(FileUtils.uriToFile(activity,
+                                                dataList).mapTo(arrayListOf()) { it.absolutePath })
+                                            hideLoading?.invoke()
+                                        }
                                     }
                                 }
-                                pathResult?.let {
-                                    activity.lifecycleScope.launch {
-                                        showLoading?.invoke()
-                                        it.invoke(FileUtils.uriToFile(activity,
-                                            dataList).mapTo(arrayListOf()) { it.absolutePath })
-                                        hideLoading?.invoke()
-                                    }
+                                if (imageLoader != null) {
+                                    imageLoaders.remove(id)
                                 }
                             }
                         }
@@ -197,25 +216,34 @@ class ImagePicker private constructor() {
         private var maxVideoCount: Int = 9
 
         /**
+         * 图片加载方式
+         */
+        private var imageLoader: ImageLoader? = null
+
+        /**
          *文件选择类型
          * @see SelectType
          */
         private var selectType: SelectType = SelectType.All
 
-        fun showCamara(showCamara: Boolean) = apply {
+        fun setShowCamara(showCamara: Boolean) = apply {
             this.showCamara = showCamara
         }
 
-        fun selectType(selectType: SelectType) = apply {
+        fun setSelectType(selectType: SelectType) = apply {
             this.selectType = selectType
         }
 
-        fun maxImageCount(maxImageCount: Int) = apply {
+        fun setMaxImageCount(maxImageCount: Int) = apply {
             this.maxImageCount = maxImageCount
         }
 
-        fun maxVideoCount(maxVideoCount: Int) = apply {
+        fun setMaxVideoCount(maxVideoCount: Int) = apply {
             this.maxVideoCount = maxVideoCount
+        }
+
+        fun setImageLoader(imageLoader: ImageLoader) {
+            this.imageLoader = imageLoader
         }
 
         fun build() = ImagePicker().also {
@@ -223,6 +251,7 @@ class ImagePicker private constructor() {
             it.maxVideoCount = maxVideoCount
             it.showCamara = showCamara
             it.selectType = selectType
+            it.imageLoader = imageLoader
         }
 
 
@@ -231,14 +260,14 @@ class ImagePicker private constructor() {
     companion object {
         const val TAG = "ImagePicker"
         fun log(content: String) {
-            if ( BuildConfig.DEBUG){
+            if (BuildConfig.DEBUG) {
                 Log.e("$TAG: ", content)
             }
 
         }
 
         /**
-         * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片造成的缓存
+         * 在业务逻辑完成（如图片上传）页面关闭的时候可调用此方法清理选取图片（asFile、asPath方式获取图片）造成的缓存
          */
         fun clearCache(context: Context) = runBlocking {
             flow {
@@ -249,14 +278,20 @@ class ImagePicker private constructor() {
                 .collect()
         }
 
-        inline fun deleteCache(context: Context) {
+        private fun deleteCache(context: Context) {
             var file = File(getTempDir(context))
             if (file.exists()) {
                 file.deleteRecursively()
             }
         }
 
-        inline fun getTempDir(context: Context) = "${context.cacheDir.absolutePath}/image_pick/"
+        fun getTempDir(context: Context) = "${context.cacheDir.absolutePath}/image_pick/"
+        private var id = 0;
+        private fun generateId(): Int {
+            return ++id;
+        }
 
+        val imageLoaders = hashMapOf<Int, ImageLoader?>()
+        var globalImageLoader: ImageLoader? = null
     }
 }

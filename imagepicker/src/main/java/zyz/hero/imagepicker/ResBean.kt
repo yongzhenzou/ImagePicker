@@ -17,7 +17,7 @@ data class ResBean(
     var date: Long? = null,
     var select: Boolean = false,
     var isCamera: Boolean = false,
-): Parcelable {
+) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readParcelable(Uri::class.java.classLoader),
         parcel.readString(),

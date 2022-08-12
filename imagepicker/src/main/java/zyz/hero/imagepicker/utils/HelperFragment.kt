@@ -17,7 +17,7 @@ import zyz.hero.imagepicker.ui.ImagePickerActivity
 import java.io.File
 
 
-class SupportFragment : Fragment() {
+internal class HelperFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.retainInstance = true
@@ -32,10 +32,9 @@ class SupportFragment : Fragment() {
             if (requestCode == REQUEST_CODE) {
                 onPermissionResult?.invoke(grantResults.all { it == 0 })
             }
-            mFragmentManager?.beginTransaction()?.remove(this)?.commitNow()
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-        }finally {
+        } finally {
             mFragmentManager?.beginTransaction()?.remove(this)?.commitNow()
         }
 
@@ -46,13 +45,13 @@ class SupportFragment : Fragment() {
         try {
             if (requestCode == REQUEST_CODE) {
                 onResult?.invoke(resultCode, data)
-                if (resultCode==Activity.RESULT_OK){
+                if (resultCode == Activity.RESULT_OK) {
                     captureResult?.invoke(imageBean)
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-        }finally {
+        } finally {
             mFragmentManager?.beginTransaction()?.remove(this)?.commitNow()
         }
     }
@@ -72,8 +71,9 @@ class SupportFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = SupportFragment()
-            fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
+            var tempFragment = HelperFragment()
+            fragmentManager.beginTransaction().add(tempFragment, TAG + "_startActivityForResult")
+                .commitNow()
             tempFragment.onResult = onResult
             tempFragment.mFragmentManager = fragmentManager
             tempFragment.startActivityForResult(
@@ -92,8 +92,9 @@ class SupportFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = SupportFragment()
-            fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
+            var tempFragment = HelperFragment()
+            fragmentManager.beginTransaction().add(tempFragment, TAG + "_requestPermission")
+                .commitNow()
             tempFragment.onPermissionResult = onPermissionResult
             tempFragment.mFragmentManager = fragmentManager
             tempFragment.requestPermissions(permissions, REQUEST_CODE)
@@ -106,8 +107,8 @@ class SupportFragment : Fragment() {
             fragmentManager ?: return kotlin.run {
                 Log.e(TAG, "fragmentManager can not be null")
             }
-            var tempFragment = SupportFragment()
-            fragmentManager.beginTransaction().add(tempFragment, TAG).commitNow()
+            var tempFragment = HelperFragment()
+            fragmentManager.beginTransaction().add(tempFragment, TAG + "_takePhoto").commitNow()
             tempFragment.captureResult = captureResult
             tempFragment.mFragmentManager = fragmentManager
             tempFragment.takePhoto()
@@ -116,25 +117,29 @@ class SupportFragment : Fragment() {
         private const val TAG = "TempFragment"
         private const val REQUEST_CODE = 502
     }
-    var imageBean:ResBean? = null
+
+    var imageBean: ResBean? = null
     private fun takePhoto() {
-        var fileDir = File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.path)
-        if (!fileDir.exists()){
+        var fileDir =
+            File(requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.path)
+        if (!fileDir.exists()) {
             fileDir.mkdir()
         }
         var fileName = "IMG_" + System.currentTimeMillis() + ".jpg";
-        var mFilePath = fileDir.absolutePath +"/"+ fileName;
+        var mFilePath = fileDir.absolutePath + "/" + fileName;
         //
-        var values =  ContentValues()
-        values.put(MediaStore.Images.Media.DISPLAY_NAME,fileName)
-        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.Q){
-            values.put(MediaStore.Images.Media.RELATIVE_PATH,"DCIM/Pictures")
-        }else{
+        var values = ContentValues()
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.put(MediaStore.Images.Media.RELATIVE_PATH, "DCIM/Pictures")
+        } else {
             values.put(MediaStore.Images.Media.DATA, mFilePath);
         }
-        values.put(MediaStore.Images.Media.MIME_TYPE,"image/JPEG")
-        var uri = requireActivity().contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values)!!
-        imageBean = ResBean(uri,fileName, TYPE_IMG)
+        values.put(MediaStore.Images.Media.MIME_TYPE, "image/JPEG")
+        var uri =
+            requireActivity().contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                values)!!
+        imageBean = ResBean(uri, fileName, TYPE_IMG)
         startActivityForResult(Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             putExtra(MediaStore.EXTRA_OUTPUT, uri)
         }, REQUEST_CODE)

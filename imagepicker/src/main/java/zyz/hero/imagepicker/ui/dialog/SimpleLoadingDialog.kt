@@ -11,7 +11,7 @@ import zyz.hero.imagepicker.R
  * @author yongzhen_zou@163.com
  * @date 2021/12/19 12:34 下午
  */
-class SimpleLoadingDialog: BaseDialogFragment() {
+class SimpleLoadingDialog : BaseDialogFragment() {
     override fun createView(
         context: Context?,
         inflater: LayoutInflater,
@@ -20,7 +20,7 @@ class SimpleLoadingDialog: BaseDialogFragment() {
         setCanceledBack(false)
         isCancelable = false
         setDimEnabled(false)
-        return inflater.inflate(R.layout.dialog_loading,container,false)
+        return inflater.inflate(R.layout.dialog_loading, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
