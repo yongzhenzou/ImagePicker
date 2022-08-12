@@ -112,7 +112,11 @@ class ImagePicker private constructor() {
         if (checkParams()) {
             HelperFragment.requestPermission(activity.supportFragmentManager,
                 permissions = if (showCamara) Permission.PERMISSION_CAMERA else Permission.PERMISSION_READ_WRITE) {
-                if (it) {//这里再申请一遍权限，防止ACCESS_MEDIA_LOCATION错误
+                if (it) {
+                    /**
+                     * 这里再申请一遍权限，防止ACCESS_MEDIA_LOCATION错误
+                     * It's not a good idea, but I can't think of any other way to deal with it
+                     */
                     HelperFragment.requestPermission(activity.supportFragmentManager,
                         permissions = if (showCamara) Permission.PERMISSION_CAMERA else Permission.PERMISSION_READ_WRITE) {
                         HelperFragment.startActivityForResult(
